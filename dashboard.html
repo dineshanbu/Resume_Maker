@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -101,7 +103,8 @@
                     <i class="fas fa-plus"></i> New Resume
                 </button>
                 <div class="user-menu">
-                    <img src="https://ui-avatars.com/api/?name=John+Doe&background=1D88ED&color=fff" alt="User" class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=John+Doe&background=1D88ED&color=fff" alt="User"
+                        class="user-avatar">
                     <span class="user-name">John Doe</span>
                 </div>
             </div>
@@ -111,7 +114,7 @@
         <div class="content-area">
             <div class="page-header">
                 <h1>Dashboard</h1>
-                <p class="text-muted">Welcome back! Here's your resume building overview.</p>
+                <p class="text-muted" style="color: white !important;">Welcome back! Here's your resume building overview.</p>
             </div>
 
             <!-- Stats Cards -->
@@ -168,14 +171,116 @@
                     <h5>Recent Resumes</h5>
                     <a href="my-resumes.html" class="btn-view-all">View All</a>
                 </div>
-                <div id="recentResumesGrid" class="resumes-grid">
-                    <!-- Skeleton Loading -->
-                    <div class="resume-card-skeleton"></div>
-                    <div class="resume-card-skeleton"></div>
-                    <div class="resume-card-skeleton"></div>
+                <!-- Card Grid -->
+                <div class="rb-grid">
+
+                    <div class="rb-card">
+                        <div class="rb-card-left">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+
+                        <div class="rb-card-right">
+                            <h4 class="rb-title">Senior Frontend Developer</h4>
+
+                            <div class="rb-meta">
+                                <span class="rb-template">Modern Professional</span>
+                                <span class="rb-status completed">Completed</span>
+                            </div>
+
+                            <p class="rb-date">Created on 10 Jan 2025</p>
+                            
+                            <div class="rb-progress">
+                                <div class="rb-progress-fill"></div>
+                            </div>
+
+                            <div class="rb-actions">
+                                <button class="rb-action"><i class="fas fa-share-alt"></i><span>Share</span></button>
+                                <button class="rb-action"><i class="fas fa-copy"></i><span>Copy</span></button>
+                                <button class="rb-action"><i class="fas fa-chart-bar"></i><span>Analyze</span></button>
+                                <button class="rb-action"><i class="fas fa-archive"></i><span>Archive</span></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duplicate card -->
+                    <div class="rb-card">
+                        <div class="rb-card-left">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+
+                        <div class="rb-card-right">
+                            <h4 class="rb-title">UI UX DESIGN</h4>
+
+                            <div class="rb-meta">
+                                <span class="rb-template">Modern Professional</span>
+                                <span class="rb-status draft">Draft</span>
+                            </div>
+
+                            <p class="rb-date">Created on 10 Jan 2025</p>
+
+                            <div class="rb-progress">
+                                <div class="rb-progress-fill"></div>
+                            </div>
+
+                            <div class="rb-actions">
+                                <button class="rb-action"><i class="fas fa-share-alt"></i><span>Share</span></button>
+                                <button class="rb-action"><i class="fas fa-copy"></i><span>Copy</span></button>
+                                <button class="rb-action"><i class="fas fa-chart-bar"></i><span>Analyze</span></button>
+                                <button class="rb-action"><i class="fas fa-archive"></i><span>Archive</span></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duplicate card -->
+                    <div class="rb-card">
+                        <div class="rb-card-left">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+
+                        <div class="rb-card-right">
+                            <h4 class="rb-title">UI/UX Designer</h4>
+                            <p class="rb-template">Creative Design</p>
+
+                            <div class="rb-progress">
+                                <div class="rb-progress-fill"></div>
+                            </div>
+
+                            <div class="rb-actions">
+                                <button class="rb-action"><i class="fas fa-share-alt"></i><span>Share</span></button>
+                                <button class="rb-action"><i class="fas fa-copy"></i><span>Copy</span></button>
+                                <button class="rb-action"><i class="fas fa-chart-bar"></i><span>Analyze</span></button>
+                                <button class="rb-action"><i class="fas fa-archive"></i><span>Archive</span></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duplicate card -->
+                    <div class="rb-card">
+                        <div class="rb-card-left">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+
+                        <div class="rb-card-right">
+                            <h4 class="rb-title">UI/UX Designer</h4>
+                            <p class="rb-template">Creative Design</p>
+
+                            <div class="rb-progress">
+                                <div class="rb-progress-fill"></div>
+                            </div>
+
+                            <div class="rb-actions">
+                                <button class="rb-action"><i class="fas fa-share-alt"></i><span>Share</span></button>
+                                <button class="rb-action"><i class="fas fa-copy"></i><span>Copy</span></button>
+                                <button class="rb-action"><i class="fas fa-chart-bar"></i><span>Analyze</span></button>
+                                <button class="rb-action"><i class="fas fa-archive"></i><span>Archive</span></button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
-            
+
             <!-- Floating Quick Actions Button -->
             <div class="floating-action-btn">
                 <i class="fas fa-plus"></i> Quick Actions
@@ -187,4 +292,5 @@
     <script src="assets/js/script.js"></script>
     <script src="assets/js/dashboard.js"></script>
 </body>
+
 </html>
