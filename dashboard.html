@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -59,6 +60,24 @@
                 <a href="profile.html">
                     <i class="fas fa-user"></i>
                     <span>Profile</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="showToast('Analytics coming soon')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="showToast('Job Tracker coming soon')">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Job Tracker</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="showToast('Portfolio Builder coming soon')">
+                    <i class="fas fa-image"></i>
+                    <span>Portfolio Builder</span>
                 </a>
             </li>
             <li class="mt-auto">
@@ -143,51 +162,23 @@
                 </div>
             </div>
 
-            <!-- Recent Resumes -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Resumes</h5>
-                    <a href="my-resumes.html" class="btn btn-sm btn-outline-primary">View All</a>
+            <!-- Recent Resumes Section -->
+            <div class="recent-resumes-section">
+                <div class="section-header">
+                    <h5>Recent Resumes</h5>
+                    <a href="my-resumes.html" class="btn-view-all">View All</a>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Resume Name</th>
-                                    <th>Template</th>
-                                    <th>Last Updated</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recentResumesTable">
-                                <!-- Skeleton Loading -->
-                                <tr class="skeleton-row">
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-badge"></div></td>
-                                    <td><div class="skeleton-actions"></div></td>
-                                </tr>
-                                <tr class="skeleton-row">
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-badge"></div></td>
-                                    <td><div class="skeleton-actions"></div></td>
-                                </tr>
-                                <tr class="skeleton-row">
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-text"></div></td>
-                                    <td><div class="skeleton-badge"></div></td>
-                                    <td><div class="skeleton-actions"></div></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div id="recentResumesGrid" class="resumes-grid">
+                    <!-- Skeleton Loading -->
+                    <div class="resume-card-skeleton"></div>
+                    <div class="resume-card-skeleton"></div>
+                    <div class="resume-card-skeleton"></div>
                 </div>
+            </div>
+            
+            <!-- Floating Quick Actions Button -->
+            <div class="floating-action-btn">
+                <i class="fas fa-plus"></i> Quick Actions
             </div>
         </div>
     </div>

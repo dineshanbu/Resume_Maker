@@ -1,0 +1,348 @@
+/* ========================================
+   Dashboard Specific Styles
+   ======================================== */
+
+.recent-resumes-section {
+    margin-top: 3rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark-text-primary);
+    margin: 0;
+}
+
+.btn-view-all {
+    padding: 0.625rem 1.25rem;
+    background: transparent;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.btn-view-all:hover {
+    background: var(--accent-cyan);
+    color: #ffffff;
+}
+
+/* Resume Card Grid */
+.resumes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.resume-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(25, 35, 55, 0.75) 100%);
+    border: 1px solid rgba(226, 232, 240, 0.15);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: row;
+    height: 180px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(226, 232, 240, 0.1);
+}
+
+.resume-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(226, 232, 240, 0.15);
+    border-color: rgba(226, 232, 240, 0.25);
+}
+
+.resume-preview {
+    background: linear-gradient(135deg, rgba(29, 136, 237, 0.3), rgba(6, 182, 212, 0.15));
+    width: 95px;
+    min-width: 95px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-right: 1px solid rgba(226, 232, 240, 0.12);
+    flex-shrink: 0;
+}
+
+.resume-preview-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    opacity: 0.85;
+}
+
+.resume-info {
+    padding: 0.75rem 1rem 0.7rem 1.1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    gap: 0.4rem;
+}
+
+.resume-menu {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: transparent;
+    border: none;
+    color: var(--dark-text-secondary);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.resume-menu:hover {
+    color: var(--primary-color);
+}
+
+.resume-header {
+    padding-right: 1.5rem;
+    flex-shrink: 0;
+}
+
+.resume-title {
+    font-weight: 700;
+    color: var(--dark-text-primary);
+    margin: 0 0 0.05rem 0;
+    font-size: 0.88rem;
+    line-height: 1.25;
+}
+
+.resume-template {
+    font-size: 0.73rem;
+    color: var(--dark-text-secondary);
+    margin: 0 0 0.15rem 0;
+    font-weight: 500;
+}
+
+.resume-meta {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 0.7rem;
+}
+
+.resume-date {
+    color: var(--dark-text-secondary);
+    font-size: 0.7rem;
+}
+
+.resume-status-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 0.7rem;
+}
+
+.resume-status-badge.completed {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10B981;
+}
+
+.resume-status-badge.draft {
+    background: rgba(245, 158, 11, 0.2);
+    color: #F59E0B;
+}
+
+.resume-progress {
+    height: 2.5px;
+    background: rgba(226, 232, 240, 0.1);
+    border-radius: 1.25px;
+    margin: 0.3rem 0 0.35rem 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.resume-progress-bar {
+    height: 100%;
+    border-radius: 1.25px;
+    transition: width 0.3s ease;
+}
+
+.resume-progress-bar.completed {
+    background: linear-gradient(90deg, #10B981, #34D399);
+    width: 100%;
+}
+
+.resume-progress-bar.draft {
+    background: linear-gradient(90deg, #F59E0B, #FBBF24);
+    width: 60%;
+}
+
+.resume-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+.resume-action-btn {
+    flex: 1;
+    padding: 0.42rem 0.25rem;
+    background: rgba(226, 232, 240, 0.09);
+    border: 1px solid rgba(226, 232, 240, 0.15);
+    color: var(--dark-text-secondary);
+    border-radius: 6px;
+    font-size: 0.62rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    min-height: 34px;
+    position: relative;
+    overflow: hidden;
+}
+
+.resume-action-btn i {
+    font-size: 0.92rem;
+    display: inline-block;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.resume-action-btn span {
+    display: inline-block;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.resume-action-btn:hover {
+    background: rgba(29, 136, 237, 0.2);
+    border-color: rgba(29, 136, 237, 0.4);
+    color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(29, 136, 237, 0.2);
+}
+
+.resume-action-btn:hover i {
+    color: var(--primary-color);
+    transform: scale(1.08);
+}
+
+.resume-action-btn:active {
+    transform: scale(0.98);
+}
+
+/* Skeleton Loading */
+.resume-card-skeleton {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(25, 35, 55, 0.75) 100%);
+    border: 1px solid rgba(226, 232, 240, 0.15);
+    border-radius: 14px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    height: 150px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: pulse-skeleton 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-skeleton {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Floating Action Button */
+.floating-action-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-cyan));
+    color: #ffffff;
+    padding: 1rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 8px 25px rgba(29, 136, 237, 0.4);
+    transition: var(--transition);
+    z-index: 998;
+}
+
+.floating-action-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(29, 136, 237, 0.5);
+}
+
+.floating-action-btn i {
+    font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .resumes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+
+    .floating-action-btn {
+        padding: 0.875rem 1.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .resumes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .floating-action-btn {
+        bottom: 1rem;
+        right: 1rem;
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .floating-action-btn i {
+        font-size: 1.25rem;
+    }
+
+    .floating-action-btn:not(:hover) {
+        overflow: hidden;
+    }
+
+    .floating-action-btn span {
+        display: none;
+    }
+
+    .floating-action-btn:hover span {
+        display: inline;
+    }
+}

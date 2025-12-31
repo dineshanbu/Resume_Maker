@@ -21,57 +21,87 @@ function animateCounter(element, target, duration = 2000) {
 // Load Recent Resumes
 function loadRecentResumes() {
     const resumes = storage.get('resumes') || [];
-    const tableBody = document.getElementById('recentResumesTable');
+    const grid = document.getElementById('recentResumesGrid');
     
-    if (!tableBody) return;
+    if (!grid) return;
     
     // Remove skeleton rows
-    tableBody.innerHTML = '';
+    grid.innerHTML = '';
     
-    // Show only first 5 resumes
-    const recentResumes = resumes.slice(0, 5);
+    // Show only first 6 resumes
+    const recentResumes = resumes.slice(0, 6);
     
     if (recentResumes.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center py-4">
-                    <p class="text-muted mb-0">No resumes yet. Create your first resume!</p>
-                </td>
-            </tr>
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <i class="fas fa-file-alt"></i>
+                <h4>No resumes yet</h4>
+                <p>Create your first resume to get started</p>
+            </div>
         `;
         return;
     }
     
     recentResumes.forEach(resume => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <strong>${resume.name}</strong>
-            </td>
-            <td>${resume.template}</td>
-            <td>${formatDate(resume.lastUpdated)}</td>
-            <td>
-                <span class="badge ${resume.status === 'completed' ? 'bg-success' : 'bg-warning'}">
-                    ${resume.status === 'completed' ? 'Completed' : 'Draft'}
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editResume(${resume.id})">
-                    <i class="fas fa-edit"></i>
+        const card = document.createElement('div');
+        card.className = 'resume-card';
+        card.innerHTML = `
+            <div class="resume-preview">
+                <i class="fas fa-file-alt resume-preview-icon"></i>
+            </div>
+            <div class="resume-info">
+                <button class="resume-menu" title="More options">
+                    <i class="fas fa-ellipsis-v"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="duplicateResume(${resume.id})">
-                    <i class="fas fa-copy"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteResume(${resume.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success" onclick="downloadResume(${resume.id})">
-                    <i class="fas fa-download"></i>
-                </button>
-            </td>
+                <div class="resume-header">
+                    <h5 class="resume-title">${resume.name}</h5>
+                    <p class="resume-template">${resume.template}</p>
+                    <div class="resume-meta">
+                        <span class="resume-date">${formatDate(resume.lastUpdated)}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="resume-progress">
+                        <div class="resume-progress-bar ${resume.status}"></div>
+                    </div>
+                    <div class="resume-actions">
+                        <button class="resume-action-btn" onclick="shareResume(${resume.id})" title="Share">
+                            <i class="fas fa-share-alt"></i>
+                            <span>Share</span>
+                        </button>
+                        <button class="resume-action-btn" onclick="duplicateResume(${resume.id})" title="Duplicate">
+                            <i class="fas fa-copy"></i>
+                            <span>Duplicate</span>
+                        </button>
+                        <button class="resume-action-btn" onclick="analyzeResume(${resume.id})" title="Analyze">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Analyze</span>
+                        </button>
+                        <button class="resume-action-btn" onclick="archiveResume(${resume.id})" title="Archive">
+                            <i class="fas fa-archive"></i>
+                            <span>Archive</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
-        tableBody.appendChild(row);
+        grid.appendChild(card);
     });
+}
+
+// Share Resume
+function shareResume(id) {
+    showToast('Share link copied to clipboard!');
+}
+
+// Analyze Resume
+function analyzeResume(id) {
+    showToast('Analyzing resume...');
+}
+
+// Archive Resume
+function archiveResume(id) {
+    showToast('Resume archived successfully!');
 }
 
 // Edit Resume
@@ -118,8 +148,69 @@ function downloadResume(id) {
     // In real app, this would generate and download PDF
 }
 
+// Initialize sample data if empty
+function initializeSampleData() {
+    const existingResumes = storage.get('resumes');
+    if (!existingResumes || existingResumes.length === 0) {
+        const sampleResumes = [
+            {
+                id: 1,
+                name: 'Senior Frontend Developer Resume',
+                template: 'Modern Professional',
+                status: 'completed',
+                lastUpdated: new Date(2025, 0, 10).toISOString(),
+                position: 0
+            },
+            {
+                id: 2,
+                name: 'Full Stack Engineer CV',
+                template: 'ATS-Friendly',
+                status: 'completed',
+                lastUpdated: new Date(2025, 0, 8).toISOString(),
+                position: 1
+            },
+            {
+                id: 3,
+                name: 'Product Manager Resume',
+                template: 'Creative Design',
+                status: 'completed',
+                lastUpdated: new Date(2025, 0, 5).toISOString(),
+                position: 2
+            },
+            {
+                id: 4,
+                name: 'Software Architect Resume',
+                template: 'Professional',
+                status: 'completed',
+                lastUpdated: new Date(2025, 0, 3).toISOString(),
+                position: 3
+            },
+            {
+                id: 5,
+                name: 'Software Architect Resume',
+                template: 'Modern Professional',
+                status: 'completed',
+                lastUpdated: new Date(2025, 0, 3).toISOString(),
+                position: 4
+            },
+            {
+                id: 6,
+                name: 'UI/UX Designer Portfolio Creative',
+                template: 'Creative Design',
+                status: 'completed',
+                lastUpdated: new Date(2024, 11, 28).toISOString(),
+                position: 5
+            }
+        ];
+        storage.set('resumes', sampleResumes);
+    }
+}
+
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize sample data
+    initializeSampleData();
+    
     // Animate stat counters
     document.querySelectorAll('.stat-number').forEach(element => {
         const target = parseInt(element.dataset.target);
@@ -128,8 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
     
-    // Load recent resumes after skeleton animation
-    setTimeout(() => {
-        loadRecentResumes();
-    }, 1000);
+    // Load recent resumes immediately
+    loadRecentResumes();
 });
