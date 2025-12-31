@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Resume Builder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0"><i class="fas fa-file-alt text-primary"></i> ResumeAI</h4>
+            <button class="btn-close-sidebar d-lg-none" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active">
+                <a href="dashboard.html">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="my-resumes.html">
+                    <i class="fas fa-folder"></i>
+                    <span>My Resumes</span>
+                </a>
+            </li>
+            <li>
+                <a href="create-resume.html">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Create Resume</span>
+                </a>
+            </li>
+            <li>
+                <a href="upload-resume.html">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload Resume (PDF)</span>
+                </a>
+            </li>
+            <li>
+                <a href="ai-builder.html">
+                    <i class="fas fa-magic"></i>
+                    <span>AI Resume Builder</span>
+                </a>
+            </li>
+            <li>
+                <a href="templates.html">
+                    <i class="fas fa-th-large"></i>
+                    <span>Templates</span>
+                </a>
+            </li>
+            <li>
+                <a href="profile.html">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+            <li class="mt-auto">
+                <a href="#" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <nav class="top-navbar">
+            <button class="btn-toggle-sidebar" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="navbar-right">
+                <button class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> New Resume
+                </button>
+                <div class="user-menu">
+                    <img src="https://ui-avatars.com/api/?name=John+Doe&background=1D88ED&color=fff" alt="User" class="user-avatar">
+                    <span class="user-name">John Doe</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div class="content-area">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <p class="text-muted">Welcome back! Here's your resume building overview.</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 class="stat-number" data-target="12">0</h3>
+                            <p class="stat-label">Total Resumes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-warning">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 class="stat-number" data-target="5">0</h3>
+                            <p class="stat-label">Draft Resumes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 class="stat-number" data-target="7">0</h3>
+                            <p class="stat-label">Completed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-info">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 class="stat-number" data-target="24">0</h3>
+                            <p class="stat-label">Downloads</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Resumes -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Resumes</h5>
+                    <a href="my-resumes.html" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Resume Name</th>
+                                    <th>Template</th>
+                                    <th>Last Updated</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentResumesTable">
+                                <!-- Skeleton Loading -->
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-badge"></div></td>
+                                    <td><div class="skeleton-actions"></div></td>
+                                </tr>
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-badge"></div></td>
+                                    <td><div class="skeleton-actions"></div></td>
+                                </tr>
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-text"></div></td>
+                                    <td><div class="skeleton-badge"></div></td>
+                                    <td><div class="skeleton-actions"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>
