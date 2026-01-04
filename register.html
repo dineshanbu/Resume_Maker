@@ -3,61 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - ResumePro</title>
+    <title>Register - RESUNOVA AI</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
+    <style>
+        .google-btn {
+            background: white;
+            border: 2px solid var(--gray-300);
+            color: var(--gray-700);
+            font-weight: 600;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            border-radius: 0.75rem;
+        }
+        .google-btn:hover {
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--gray-300);
+        }
+        .divider span {
+            padding: 0 1rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .alert-custom {
+            border-radius: 0.75rem;
+            border: none;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--gray-400);
+            transition: color var(--transition-base);
+        }
+        .password-toggle:hover {
+            color: var(--primary-blue);
+        }
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--gray-200);
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .password-strength-bar {
+            height: 100%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+            width: 0;
+        }
+        .password-strength-bar.weak { background: var(--danger); width: 33%; }
+        .password-strength-bar.medium { background: var(--warning); width: 66%; }
+        .password-strength-bar.strong { background: var(--success); width: 100%; }
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.1);
+        }
+    </style>
 </head>
 <body>
     <div class="auth-wrapper">
         <div class="container">
-            <div class="auth-card">
+            <div class="auth-card" style="max-width: 550px;" data-aos="fade-up" data-aos-duration="600">
                 <div class="auth-header">
                     <a href="index.html" class="d-inline-block mb-4">
                         <h3 class="fw-bold mb-0">
                             <i class="bi bi-file-earmark-text text-primary"></i>
-                            <span class="text-primary">Resume</span><span class="text-dark">Pro</span>
+                            <span class="text-primary">RESUNOVA</span> <span class="text-dark">AI</span>
                         </h3>
                     </a>
-                    <h2>Create Your Account</h2>
+                    <h2 class="fw-bold mb-2">Create Your Account 🚀</h2>
                     <p class="text-muted">Start building your professional resume today</p>
                 </div>
 
-                <form id="registerForm">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="name" placeholder="John Doe" required>
+                <!-- Alert Messages -->
+                <div id="alertContainer"></div>
+
+                <form id="registerForm" novalidate>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="fullName" class="form-label fw-semibold">Full Name</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="fullName" 
+                                placeholder="John Doe" 
+                                required
+                                data-testid="register-name-input"
+                            >
+                            <div class="invalid-feedback">Please enter your full name</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="email" class="form-label fw-semibold">Email Address</label>
+                            <input 
+                                type="email" 
+                                class="form-control" 
+                                id="email" 
+                                placeholder="your@email.com" 
+                                required
+                                data-testid="register-email-input"
+                            >
+                            <div class="invalid-feedback">Please enter a valid email address</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                            <input 
+                                type="tel" 
+                                class="form-control" 
+                                id="phone" 
+                                placeholder="9876543210" 
+                                required
+                                data-testid="register-phone-input"
+                            >
+                            <div class="invalid-feedback">Please enter a valid phone number</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="password" class="form-label fw-semibold">Password</label>
+                            <div class="position-relative">
+                                <input 
+                                    type="password" 
+                                    class="form-control" 
+                                    id="password" 
+                                    placeholder="Create a strong password" 
+                                    required
+                                    minlength="8"
+                                    data-testid="register-password-input"
+                                >
+                                <i class="bi bi-eye password-toggle" id="togglePassword" onclick="togglePasswordVisibility('password', 'togglePassword')"></i>
+                            </div>
+                            <div class="password-strength">
+                                <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                            </div>
+                            <small class="text-muted" id="passwordHint">At least 8 characters with uppercase, lowercase, number & special character</small>
+                            <div class="invalid-feedback">Password must meet the requirements</div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" placeholder="your@email.com" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" placeholder="Create a strong password" required minlength="6">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="confirmPassword" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter your password" required>
-                    </div>
-
-                    <div class="form-check mb-4">
-                        <input class="form-check-input" type="checkbox" id="terms" required>
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" id="terms" required data-testid="register-terms-checkbox">
                         <label class="form-check-label" for="terms">
                             I agree to the <a href="#" class="text-primary text-decoration-none">Terms & Conditions</a>
                         </label>
+                        <div class="invalid-feedback">You must agree to the terms and conditions</div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 mb-3">
-                        <i class="bi bi-person-plus me-2"></i>Create Account
+                    <button type="submit" class="btn btn-primary w-100 mt-4 mb-3" id="registerBtn" data-testid="register-submit-btn">
+                        <span id="registerBtnText">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </span>
+                        <span id="registerBtnLoader" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Creating account...
+                        </span>
                     </button>
 
-                    <div class="text-center">
+                    <div class="divider">
+                        <span>OR CONTINUE WITH</span>
+                    </div>
+
+                    <!-- Google Sign-up Button (UI Only) -->
+                    <button type="button" class="google-btn w-100" data-testid="google-signup-btn">
+                        <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        <span>Sign up with Google</span>
+                    </button>
+
+                    <div class="text-center mt-4">
                         <p class="text-muted mb-0">
                             Already have an account? 
                             <a href="login.html" class="text-primary text-decoration-none fw-semibold">Login</a>
@@ -68,53 +219,153 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./assets/js/auth.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+        AOS.init({ duration: 600, once: true });
+    </script>
+    
+    <!-- Load dependencies in correct order -->
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/api-service.js"></script>
+    <script src="./assets/js/security.js"></script>
+    <script src="./assets/js/auth-updated.js"></script>
+    
+    <script>
+        // Password visibility toggle
+        function togglePasswordVisibility(inputId, iconId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(iconId);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            }
+        }
+
+        // Password strength indicator
+        document.getElementById('password').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthBar = document.getElementById('passwordStrengthBar');
+            const hint = document.getElementById('passwordHint');
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[@$!%*?&]/.test(password)) strength++;
+            
+            strengthBar.className = 'password-strength-bar';
+            if (strength === 0) {
+                strengthBar.classList.add('weak');
+                hint.textContent = 'Password is too weak';
+                hint.className = 'text-danger small';
+            } else if (strength <= 2) {
+                strengthBar.classList.add('weak');
+                hint.textContent = 'Password is weak';
+                hint.className = 'text-danger small';
+            } else if (strength === 3) {
+                strengthBar.classList.add('medium');
+                hint.textContent = 'Password is moderate';
+                hint.className = 'text-warning small';
+            } else {
+                strengthBar.classList.add('strong');
+                hint.textContent = 'Password is strong';
+                hint.className = 'text-success small';
+            }
+        });
+
+        // Show alert message
+        function showAlert(message, type = 'danger') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertHTML = `
+                <div class="alert alert-${type} alert-custom d-flex align-items-center" role="alert">
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
+                    <div>${message}</div>
+                </div>
+            `;
+            alertContainer.innerHTML = alertHTML;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
+            // Clear previous alerts
+            document.getElementById('alertContainer').innerHTML = '';
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const termsAccepted = document.getElementById('terms').checked;
             
-            // Validation
-            if (password !== confirmPassword) {
-                alert('Passwords do not match!');
+            // Basic validation
+            if (!fullName || !email || !phone || !password) {
+                showAlert('Please fill in all fields', 'danger');
                 return;
             }
             
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long!');
+            if (!termsAccepted) {
+                showAlert('Please accept the terms and conditions', 'danger');
                 return;
             }
             
-            // Check if user already exists
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            if (users.find(u => u.email === email)) {
-                alert('User with this email already exists!');
-                return;
+            // Disable button and show loader
+            const registerBtn = document.getElementById('registerBtn');
+            const registerBtnText = document.getElementById('registerBtnText');
+            const registerBtnLoader = document.getElementById('registerBtnLoader');
+            
+            registerBtn.disabled = true;
+            registerBtnText.classList.add('d-none');
+            registerBtnLoader.classList.remove('d-none');
+            
+            try {
+                // Call auth service
+                const result = await authService.signup({
+                    fullName,
+                    email,
+                    phone,
+                    password
+                });
+                
+                if (result.success) {
+                    showAlert('Account created successfully! Redirecting...', 'success');
+                    
+                    // Redirect after 1.5 seconds
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                } else {
+                    showAlert(result.message || 'Registration failed. Please try again.', 'danger');
+                    registerBtn.disabled = false;
+                    registerBtnText.classList.remove('d-none');
+                    registerBtnLoader.classList.add('d-none');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showAlert(error.message || 'Registration failed. Please try again.', 'danger');
+                registerBtn.disabled = false;
+                registerBtnText.classList.remove('d-none');
+                registerBtnLoader.classList.add('d-none');
             }
-            
-            // Create new user
-            const newUser = {
-                name: name,
-                email: email,
-                password: password,
-                role: 'user',
-                plan: 'free',
-                createdAt: new Date().toISOString()
-            };
-            
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Set as current user
-            localStorage.setItem('currentUser', JSON.stringify(newUser));
-            
-            alert('Account created successfully!');
-            window.location.href = 'dashboard.html';
+        });
+
+        // Google Sign-up (UI only - shows alert)
+        document.querySelector('[data-testid="google-signup-btn"]').addEventListener('click', function() {
+            showAlert('Google Sign-up is coming soon! Please use email registration for now.', 'info');
         });
     </script>
 </body>
