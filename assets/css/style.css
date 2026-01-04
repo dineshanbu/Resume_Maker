@@ -468,8 +468,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ============ Enhanced Template Cards ============ */
 .template-card {
-    background: white;
-    border-radius: 1.25rem;
+    /* background: white; */
+    border-radius: 1.35rem;
     overflow: hidden;
     transition: all var(--transition-base);
     border: 2px solid var(--gray-200);
@@ -496,11 +496,9 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+ 
     display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-base);
+   
 }
 
 .template-placeholder i {
