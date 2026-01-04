@@ -65,10 +65,10 @@ function loadRecentResumes(resumes) {
         container.innerHTML = `
             <div class="col-12">
                 <div class="empty-state py-5">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <h5>No resumes yet</h5>
-                    <p>Create your first resume to get started!</p>
-                    <a href="resume-builder.html" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-text" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3">No resumes yet</h5>
+                    <p class="text-muted">Create your first resume to get started!</p>
+                    <a href="resume-builder.html" class="btn btn-primary mt-3">
                         <i class="bi bi-plus-circle me-2"></i>Create Resume
                     </a>
                 </div>
@@ -80,28 +80,33 @@ function loadRecentResumes(resumes) {
     // Show only first 3 resumes
     const recentResumes = resumes.slice(-3).reverse();
     
-    container.innerHTML = recentResumes.map(resume => `
+    container.innerHTML = recentResumes.map((resume, index) => `
         <div class="col-md-4">
-            <div class="resume-card">
-                <div class="resume-preview">
-                    <div class="resume-preview-content">
-                        <i class="bi bi-file-earmark-text"></i>
+            <div class="resume-preview-card" style="animation: fade-slide-up 0.6s ease-out ${index * 0.1}s both;">
+                <div class="resume-thumbnail">
+                    <i class="bi bi-file-earmark-text text-primary" style="font-size: 3rem; position: relative; z-index: 1;"></i>
+                    <div class="progress-indicator">
+                        <div class="progress" style="height: 5px; border-radius: 1rem;">
+                            <div class="progress-bar bg-success" style="width: ${resume.progress}%;"></div>
+                        </div>
                     </div>
                 </div>
-                <h6 class="mb-2 fw-semibold">${resume.name}</h6>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <small class="text-muted">${resume.template}</small>
-                    <span class="badge bg-success-subtle text-success">${resume.progress}%</span>
+                <h6 class="mb-2 fw-bold">${resume.name}</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-light text-dark border">${resume.template}</span>
+                    <span class="badge" style="background: #d1fae5; color: #059669;">${resume.progress}% Complete</span>
                 </div>
-                <small class="text-muted">Updated ${formatDate(resume.updatedAt)}</small>
-                <div class="mt-3 d-flex gap-2">
-                    <a href="resume-preview.html?id=${resume.id}" class="btn btn-sm btn-outline-primary flex-fill">
-                        <i class="bi bi-eye"></i>
-                    </a>
-                    <a href="resume-builder.html?id=${resume.id}" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-pencil"></i>
-                    </a>
+                <div class="d-flex gap-2 mb-2">
+                    <button class="btn btn-primary btn-sm flex-fill fw-semibold" onclick="window.location.href='resume-builder.html?id=${resume.id}'">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm flex-fill fw-semibold" onclick="window.location.href='resume-preview.html?id=${resume.id}'">
+                        <i class="bi bi-eye me-1"></i>Preview
+                    </button>
                 </div>
+                <button class="btn btn-outline-secondary btn-sm w-100 fw-semibold">
+                    <i class="bi bi-graph-up me-1"></i>Analyze
+                </button>
             </div>
         </div>
     `).join('');
