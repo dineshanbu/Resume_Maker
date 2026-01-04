@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Matches - ResumePro</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-file-earmark-text text-primary"></i>
+                    <span class="text-primary">Resume</span><span class="text-white">Pro</span>
+                </h5>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="resumes.html" class="menu-item">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>My Resumes</span>
+                </a>
+                <a href="resume-builder.html" class="menu-item">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Create Resume</span>
+                </a>
+                <a href="templates.html" class="menu-item">
+                    <i class="bi bi-collection"></i>
+                    <span>Templates</span>
+                </a>
+                <a href="jobs.html" class="menu-item active">
+                    <i class="bi bi-briefcase"></i>
+                    <span>Job Matches</span>
+                </a>
+                <a href="pricing.html" class="menu-item">
+                    <i class="bi bi-star"></i>
+                    <span>Upgrade</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <i class="bi bi-person"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" class="menu-item" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div>
+                    <h4 class="mb-0 fw-bold">Job Matches</h4>
+                    <small class="text-muted">Personalized job recommendations based on your resume</small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary d-lg-none" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+            </header>
+
+            <!-- Content -->
+            <div class="dashboard-content">
+                <!-- Notice -->
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle me-3 fs-4"></i>
+                        <div>
+                            <strong>Top 5 Job Matches</strong>
+                            <p class="mb-0 small">Free users see 5 matches. Upgrade to Premium for unlimited job alerts and advanced matching!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3">Filter by Category</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-sm btn-primary" data-category="all" onclick="filterJobs('all')">All Jobs</button>
+                            <button class="btn btn-sm btn-outline-primary" data-category="IT" onclick="filterJobs('IT')">IT</button>
+                            <button class="btn btn-sm btn-outline-primary" data-category="Marketing" onclick="filterJobs('Marketing')">Marketing</button>
+                            <button class="btn btn-sm btn-outline-primary" data-category="Finance" onclick="filterJobs('Finance')">Finance</button>
+                            <button class="btn btn-sm btn-outline-primary" data-category="Design" onclick="filterJobs('Design')">Design</button>
+                            <button class="btn btn-sm btn-outline-primary" data-category="Freshers" onclick="filterJobs('Freshers')">Freshers</button>
+                            <button class="btn btn-sm btn-outline-primary" data-category="Remote" onclick="filterJobs('Remote')">Remote</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jobs List -->
+                <div id="jobsList" class="row g-4">
+                    <!-- Jobs will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/jobs.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('Unauthorized');
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

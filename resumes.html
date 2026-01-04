@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Resumes - ResumePro</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-file-earmark-text text-primary"></i>
+                    <span class="text-primary">Resume</span><span class="text-white">Pro</span>
+                </h5>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="resumes.html" class="menu-item active">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>My Resumes</span>
+                </a>
+                <a href="resume-builder.html" class="menu-item">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Create Resume</span>
+                </a>
+                <a href="templates.html" class="menu-item">
+                    <i class="bi bi-collection"></i>
+                    <span>Templates</span>
+                </a>
+                <a href="jobs.html" class="menu-item">
+                    <i class="bi bi-briefcase"></i>
+                    <span>Job Matches</span>
+                </a>
+                <a href="pricing.html" class="menu-item">
+                    <i class="bi bi-star"></i>
+                    <span>Upgrade</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <i class="bi bi-person"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" class="menu-item" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div>
+                    <h4 class="mb-0 fw-bold">My Resumes</h4>
+                    <small class="text-muted">Manage all your resumes in one place</small>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-primary d-lg-none" onclick="toggleSidebar()">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <a href="resume-builder.html" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>New Resume
+                    </a>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="dashboard-content">
+                <!-- Plan Limit Notice -->
+                <div id="planNotice" class="alert alert-info d-none mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle me-3 fs-4"></i>
+                        <div class="flex-fill">
+                            <strong>Free Plan Limit Reached</strong>
+                            <p class="mb-0">You've reached your resume limit. Upgrade to Premium for unlimited resumes!</p>
+                        </div>
+                        <a href="pricing.html" class="btn btn-primary">
+                            <i class="bi bi-star me-2"></i>Upgrade
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Resumes Grid -->
+                <div id="resumesGrid" class="row g-4">
+                    <!-- Resumes will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/resume.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('Unauthorized');
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function loadResumes() {
+            const user = getCurrentUser();
+            const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+            const userResumes = resumes.filter(r => r.userId === user.email);
+            
+            const grid = document.getElementById('resumesGrid');
+            
+            // Check plan limit
+            if (user.plan === 'free' && userResumes.length >= 1) {
+                document.getElementById('planNotice').classList.remove('d-none');
+            }
+            
+            if (userResumes.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <h4>No resumes yet</h4>
+                            <p>Create your first professional resume now!</p>
+                            <a href="resume-builder.html" class="btn btn-primary btn-lg">
+                                <i class="bi bi-plus-circle me-2"></i>Create Your First Resume
+                            </a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = userResumes.map(resume => `
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="resume-card">
+                        <div class="resume-preview">
+                            <div class="resume-preview-content">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6 class="mb-2 fw-semibold">${resume.name}</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">${resume.template}</small>
+                                <span class="badge ${resume.progress === 100 ? 'bg-success' : 'bg-warning'}-subtle text-${resume.progress === 100 ? 'success' : 'warning'}">
+                                    ${resume.progress}%
+                                </span>
+                            </div>
+                            <small class="text-muted d-block mb-3">Updated ${formatDate(resume.updatedAt)}</small>
+                            
+                            <div class="d-flex gap-2 mb-2">
+                                <a href="resume-preview.html?id=${resume.id}" class="btn btn-sm btn-outline-primary flex-fill" title="Preview">
+                                    <i class="bi bi-eye"></i> Preview
+                                </a>
+                                <a href="resume-builder.html?id=${resume.id}" class="btn btn-sm btn-primary flex-fill" title="Edit">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary flex-fill" onclick="duplicateResume('${resume.id}')" title="Duplicate">
+                                    <i class="bi bi-files"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger flex-fill" onclick="deleteResume('${resume.id}')" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            return date.toLocaleDateString();
+        }
+
+        function duplicateResume(resumeId) {
+            const user = getCurrentUser();
+            
+            if (user.plan === 'free') {
+                const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+                const userResumes = resumes.filter(r => r.userId === user.email);
+                if (userResumes.length >= 1) {
+                    alert('Free plan allows only 1 resume. Upgrade to Premium for unlimited resumes!');
+                    return;
+                }
+            }
+            
+            const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+            const resume = resumes.find(r => r.id === resumeId);
+            
+            if (resume) {
+                const newResume = {
+                    ...resume,
+                    id: 'resume_' + Date.now(),
+                    name: resume.name + ' (Copy)',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                resumes.push(newResume);
+                localStorage.setItem('resumes', JSON.stringify(resumes));
+                loadResumes();
+            }
+        }
+
+        function deleteResume(resumeId) {
+            if (confirm('Are you sure you want to delete this resume? This action cannot be undone.')) {
+                let resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+                resumes = resumes.filter(r => r.id !== resumeId);
+                localStorage.setItem('resumes', JSON.stringify(resumes));
+                loadResumes();
+            }
+        }
+
+        loadResumes();
+    </script>
+</body>
+</html>

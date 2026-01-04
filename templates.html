@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Templates - ResumePro</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <!-- Simple Navigation for Templates Page -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">
+                <i class="bi bi-file-earmark-text text-primary"></i>
+                <span class="text-primary">Resume</span><span class="text-dark">Pro</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="pricing.html">Pricing</a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-primary" href="resume-builder.html">Create Resume</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Templates Section -->
+    <section class="py-6">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold mb-3">Professional Resume Templates</h1>
+                <p class="lead text-muted">Choose from our collection of ATS-optimized templates</p>
+            </div>
+
+            <!-- Category Tabs -->
+            <ul class="nav nav-pills justify-content-center mb-5" id="categoryTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-category="all" onclick="filterTemplates('all')">All Templates</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-category="basic" onclick="filterTemplates('basic')">Basic</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-category="modern" onclick="filterTemplates('modern')">Modern</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-category="premium" onclick="filterTemplates('premium')">Premium</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-category="ats" onclick="filterTemplates('ats')">ATS Optimized</button>
+                </li>
+            </ul>
+
+            <!-- Templates Grid -->
+            <div id="templatesGrid" class="row g-4">
+                <!-- Templates will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script>
+        const templates = [
+            { id: 1, name: 'Professional', category: 'basic', rating: 4.9, premium: false, atsOptimized: true },
+            { id: 2, name: 'Modern', category: 'modern', rating: 4.7, premium: true, atsOptimized: true },
+            { id: 3, name: 'Creative', category: 'modern', rating: 4.8, premium: false, atsOptimized: false },
+            { id: 4, name: 'Executive', category: 'premium', rating: 5.0, premium: true, atsOptimized: true },
+            { id: 5, name: 'Minimal', category: 'basic', rating: 4.6, premium: false, atsOptimized: true },
+            { id: 6, name: 'Tech Pro', category: 'modern', rating: 4.8, premium: true, atsOptimized: true },
+            { id: 7, name: 'Classic', category: 'basic', rating: 4.5, premium: false, atsOptimized: true },
+            { id: 8, name: 'Bold', category: 'modern', rating: 4.7, premium: true, atsOptimized: false },
+            { id: 9, name: 'Elegant', category: 'premium', rating: 4.9, premium: true, atsOptimized: true },
+            { id: 10, name: 'Simple', category: 'basic', rating: 4.4, premium: false, atsOptimized: true },
+            { id: 11, name: 'Corporate', category: 'premium', rating: 4.8, premium: true, atsOptimized: true },
+            { id: 12, name: 'Contemporary', category: 'modern', rating: 4.6, premium: false, atsOptimized: true }
+        ];
+
+        let currentCategory = 'all';
+
+        function loadTemplates() {
+            const grid = document.getElementById('templatesGrid');
+            const filteredTemplates = currentCategory === 'all' 
+                ? templates 
+                : currentCategory === 'ats'
+                    ? templates.filter(t => t.atsOptimized)
+                    : templates.filter(t => t.category === currentCategory);
+
+            const colors = ['primary', 'info', 'success', 'danger', 'warning', 'purple'];
+
+            grid.innerHTML = filteredTemplates.map((template, index) => {
+                const color = colors[index % colors.length];
+                return `
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="template-card">
+                            <div class="template-preview">
+                                <div class="template-placeholder bg-${color}-subtle">
+                                    <i class="bi bi-file-earmark-text text-${color}"></i>
+                                </div>
+                            </div>
+                            <div class="template-info">
+                                <h5 class="mb-2">${template.name}</h5>
+                                <div class="rating mb-2">
+                                    ${generateStars(template.rating)}
+                                    <small class="text-muted ms-1">${template.rating}</small>
+                                </div>
+                                <div class="mb-3">
+                                    ${template.atsOptimized ? '<span class="badge bg-success-subtle text-success me-1">ATS Friendly</span>' : ''}
+                                    ${template.premium ? '<span class="badge bg-primary-subtle text-primary">Premium</span>' : '<span class="badge bg-secondary-subtle text-secondary">Free</span>'}
+                                </div>
+                                <button class="btn btn-primary btn-sm w-100" onclick="selectTemplate('${template.name}', ${template.premium})">
+                                    <i class="bi bi-check-circle me-1"></i>Select Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateStars(rating) {
+            let stars = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="bi bi-star-fill text-warning"></i>';
+            }
+            if (hasHalfStar) {
+                stars += '<i class="bi bi-star-half text-warning"></i>';
+            }
+            for (let i = Math.ceil(rating); i < 5; i++) {
+                stars += '<i class="bi bi-star text-warning"></i>';
+            }
+            return stars;
+        }
+
+        function filterTemplates(category) {
+            currentCategory = category;
+            
+            // Update active tab
+            document.querySelectorAll('#categoryTabs .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+            
+            loadTemplates();
+        }
+
+        function selectTemplate(templateName, isPremium) {
+            const user = getCurrentUser();
+            
+            if (isPremium && (!user || user.plan !== 'premium')) {
+                if (confirm('This is a premium template. Upgrade to Premium to use it?')) {
+                    window.location.href = 'pricing.html';
+                }
+                return;
+            }
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            window.location.href = `resume-builder.html?template=${encodeURIComponent(templateName)}`;
+        }
+
+        loadTemplates();
+    </script>
+</body>
+</html>
