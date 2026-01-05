@@ -7,23 +7,25 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
     <style>
         .category-tabs {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.625rem;
             flex-wrap: wrap;
             justify-content: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
         }
         
         .category-tab {
-            padding: 0.75rem 1.75rem;
+            padding: 0.625rem 1.5rem;
             border: 2px solid var(--gray-200);
             background: white;
-            border-radius: 3rem;
-            font-weight: 600;
+            border-radius: 2rem;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
             color: var(--gray-700);
             transition: all var(--transition-base);
             cursor: pointer;
@@ -39,21 +41,21 @@
             background: var(--gradient-primary);
             color: white;
             border-color: transparent;
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-sm);
         }
         
         .templates-count {
-            font-size: 0.875rem;
-            opacity: 0.7;
-            margin-left: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-left: 0.375rem;
         }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top" data-testid="main-navbar">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="index.html">
+            <a class="navbar-brand fw-bold" href="index.html" data-testid="navbar-brand">
                 <i class="bi bi-file-earmark-text text-primary"></i>
                 <span class="text-primary">Resume</span><span class="text-dark">Pro</span>
             </a>
@@ -72,7 +74,7 @@
                         <a class="nav-link" href="pricing.html">Pricing</a>
                     </li>
                     <li class="nav-item ms-lg-2">
-                        <a class="btn btn-primary" href="resume-builder.html">
+                        <a class="btn btn-primary" href="resume-builder.html" data-testid="create-resume-btn">
                             <i class="bi bi-plus-circle me-1"></i>Create Resume
                         </a>
                     </li>
@@ -82,52 +84,52 @@
     </nav>
 
     <!-- Header Section -->
-    <section class="py-5 bg-light">
+    <section class="py-4 bg-light" data-testid="header-section">
         <div class="container">
             <div class="text-center">
-                <h1 class="display-4 fw-bold mb-3">Professional Resume Templates</h1>
-                <p class="lead text-muted mb-4">Choose from <span class="text-primary fw-bold" id="totalCount">12</span> ATS-optimized templates designed by career experts</p>
+                <h1 class="display-5 fw-bold mb-2">Professional Resume Templates</h1>
+                <p class="lead text-muted mb-0">Choose from <span class="text-primary fw-bold" id="totalCount">12</span> ATS-optimized templates</p>
             </div>
         </div>
     </section>
 
     <!-- Templates Section -->
-    <section class="py-6">
+    <section class="py-6" data-testid="templates-section">
         <div class="container">
             <!-- Category Tabs -->
             <div class="category-tabs" id="categoryTabs">
-                <button class="category-tab active" data-category="all" onclick="filterTemplates('all')">
+                <button class="category-tab active" data-category="all" onclick="filterTemplates('all')" data-testid="filter-all">
                     All Templates<span class="templates-count" id="count-all">12</span>
                 </button>
-                <button class="category-tab" data-category="basic" onclick="filterTemplates('basic')">
+                <button class="category-tab" data-category="basic" onclick="filterTemplates('basic')" data-testid="filter-basic">
                     Basic<span class="templates-count" id="count-basic">3</span>
                 </button>
-                <button class="category-tab" data-category="modern" onclick="filterTemplates('modern')">
+                <button class="category-tab" data-category="modern" onclick="filterTemplates('modern')" data-testid="filter-modern">
                     Modern<span class="templates-count" id="count-modern">5</span>
                 </button>
-                <button class="category-tab" data-category="premium" onclick="filterTemplates('premium')">
+                <button class="category-tab" data-category="premium" onclick="filterTemplates('premium')" data-testid="filter-premium">
                     Premium<span class="templates-count" id="count-premium">3</span>
                 </button>
-                <button class="category-tab" data-category="ats" onclick="filterTemplates('ats')">
+                <button class="category-tab" data-category="ats" onclick="filterTemplates('ats')" data-testid="filter-ats">
                     <i class="bi bi-shield-check me-1"></i>ATS Optimized<span class="templates-count" id="count-ats">10</span>
                 </button>
             </div>
 
             <!-- Templates Grid -->
-            <div id="templatesGrid" class="row g-4">
+            <div id="templatesGrid" class="row g-3">
                 <!-- Templates will be loaded here -->
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="py-6 bg-light">
+    <section class="py-5 bg-light" data-testid="cta-section">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-8 text-center">
-                    <h2 class="fw-bold mb-3">Ready to Build Your Resume?</h2>
-                    <p class="lead text-muted mb-4">Choose a template and create your professional resume in minutes</p>
-                    <a href="resume-builder.html" class="btn btn-primary btn-lg px-5">
+                    <h2 class="fw-bold mb-2" style="font-size: 2rem;">Ready to Build Your Resume?</h2>
+                    <p class="lead text-muted mb-3">Choose a template and create your professional resume in minutes</p>
+                    <a href="resume-builder.html" class="btn btn-primary btn-lg" data-testid="start-building-btn">
                         <i class="bi bi-rocket-takeoff me-2"></i>Start Building Now
                     </a>
                 </div>
@@ -139,18 +141,18 @@
     <script src="./assets/js/auth.js"></script>
     <script>
         const templates = [
-            { id: 1, name: 'Professional', category: 'basic', rating: 4.9, reviews: 1243, premium: false, atsOptimized: true, description: 'Clean and modern design perfect for any industry', img: '/assets/r2.jpg' },
-            { id: 2, name: 'Modern', category: 'modern', rating: 4.7, reviews: 856, premium: true, atsOptimized: true, description: 'Contemporary style with elegant formatting', img: '/assets/r1.jpg' },
-            { id: 3, name: 'Creative', category: 'modern', rating: 4.8, reviews: 2145, premium: false, atsOptimized: false, description: 'Stand out with unique creative layout', img: '/assets/r3.jpg' },
-            { id: 4, name: 'Executive', category: 'premium', rating: 5.0, reviews: 643, premium: true, atsOptimized: true, description: 'Premium design for senior professionals', img: '/assets/r2.jpg' },
-            { id: 5, name: 'Minimal', category: 'basic', rating: 4.6, reviews: 987, premium: false, atsOptimized: true, description: 'Simple and clean minimalist approach', img: '/assets/r1.jpg' },
-            { id: 6, name: 'Tech Pro', category: 'modern', rating: 4.8, reviews: 1534, premium: true, atsOptimized: true, description: 'Ideal for tech and IT professionals', img: '/assets/r3.jpg' },
-            { id: 7, name: 'Classic', category: 'basic', rating: 4.5, reviews: 734, premium: false, atsOptimized: true, description: 'Traditional format that never fails', img: '/assets/r2.jpg' },
-            { id: 8, name: 'Bold', category: 'modern', rating: 4.7, reviews: 1098, premium: true, atsOptimized: false, description: 'Make a strong impression with bold design', img: '/assets/r1.jpg' },
-            { id: 9, name: 'Elegant', category: 'premium', rating: 4.9, reviews: 876, premium: true, atsOptimized: true, description: 'Sophisticated style for executives', img: '/assets/r3.jpg' },
-            { id: 10, name: 'Simple', category: 'basic', rating: 4.4, reviews: 567, premium: false, atsOptimized: true, description: 'Straightforward and effective design', img: '/assets/r2.jpg' },
-            { id: 11, name: 'Corporate', category: 'premium', rating: 4.8, reviews: 945, premium: true, atsOptimized: true, description: 'Professional corporate style', img: '/assets/r1.jpg' },
-            { id: 12, name: 'Contemporary', category: 'modern', rating: 4.6, reviews: 712, premium: false, atsOptimized: true, description: 'Modern and fresh approach', img: '/assets/r3.jpg' }
+            { id: 1, name: 'Professional', category: 'basic', rating: 4.9, reviews: 1243, premium: false, atsOptimized: true, description: 'Clean and modern design', img: '/assets/r2.jpg' },
+            { id: 2, name: 'Modern', category: 'modern', rating: 4.7, reviews: 856, premium: true, atsOptimized: true, description: 'Contemporary style', img: '/assets/r1.jpg' },
+            { id: 3, name: 'Creative', category: 'modern', rating: 4.8, reviews: 2145, premium: false, atsOptimized: false, description: 'Unique creative layout', img: '/assets/r3.jpg' },
+            { id: 4, name: 'Executive', category: 'premium', rating: 5.0, reviews: 643, premium: true, atsOptimized: true, description: 'Premium senior design', img: '/assets/r2.jpg' },
+            { id: 5, name: 'Minimal', category: 'basic', rating: 4.6, reviews: 987, premium: false, atsOptimized: true, description: 'Simple minimalist', img: '/assets/r1.jpg' },
+            { id: 6, name: 'Tech Pro', category: 'modern', rating: 4.8, reviews: 1534, premium: true, atsOptimized: true, description: 'Ideal for tech pros', img: '/assets/r3.jpg' },
+            { id: 7, name: 'Classic', category: 'basic', rating: 4.5, reviews: 734, premium: false, atsOptimized: true, description: 'Traditional format', img: '/assets/r2.jpg' },
+            { id: 8, name: 'Bold', category: 'modern', rating: 4.7, reviews: 1098, premium: true, atsOptimized: false, description: 'Strong impression', img: '/assets/r1.jpg' },
+            { id: 9, name: 'Elegant', category: 'premium', rating: 4.9, reviews: 876, premium: true, atsOptimized: true, description: 'Sophisticated style', img: '/assets/r3.jpg' },
+            { id: 10, name: 'Simple', category: 'basic', rating: 4.4, reviews: 567, premium: false, atsOptimized: true, description: 'Effective design', img: '/assets/r2.jpg' },
+            { id: 11, name: 'Corporate', category: 'premium', rating: 4.8, reviews: 945, premium: true, atsOptimized: true, description: 'Corporate style', img: '/assets/r1.jpg' },
+            { id: 12, name: 'Contemporary', category: 'modern', rating: 4.6, reviews: 712, premium: false, atsOptimized: true, description: 'Modern approach', img: '/assets/r3.jpg' }
         ];
 
         let currentCategory = 'all';
@@ -175,7 +177,7 @@
                 
                 return `
                     <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up">
-                        <div class="template-card">
+                        <div class="template-card" data-testid="template-card-${template.id}">
                             <div class="template-preview">
                                 <div class="template-header">
                                     <span class="template-badge ${badge.class}">
@@ -191,10 +193,10 @@
                             </div>
                             <div class="template-info">
                                 <h5 class="mb-2 fw-bold">${template.name}</h5>
-                                <p class="text-muted small mb-3">${template.description}</p>
-                                <div class="rating mb-3">
+                                <p class="text-muted small mb-2">${template.description}</p>
+                                <div class="rating mb-2">
                                     ${generateStars(template.rating)}
-                                    <small class="text-muted ms-1 fw-semibold">${template.rating} (${formatNumber(template.reviews)})</small>
+                                    <small class="text-muted ms-1 fw-semibold">${template.rating}</small>
                                 </div>
                                 <button class="btn btn-primary btn-sm w-100 mt-auto" onclick="selectTemplate('${template.name}', ${template.premium})">
                                     <i class="bi bi-check-circle me-1"></i>Use Template
@@ -255,7 +257,7 @@
             const user = getCurrentUser();
             
             if (isPremium && (!user || user.plan !== 'premium')) {
-                if (confirm(`"${templateName}" is a premium template. Would you like to upgrade to Premium to unlock this template and all premium features?`)) {
+                if (confirm(`"${templateName}" is a premium template. Would you like to upgrade to Premium?`)) {
                     window.location.href = 'pricing.html';
                 }
                 return;
@@ -291,7 +293,7 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         AOS.init({
-            duration: 600,
+            duration: 500,
             once: true,
             offset: 50
         });
