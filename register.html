@@ -10,113 +10,28 @@
     <!-- Google Fonts - Rubik -->
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
-    <style>
-        .google-btn {
-            background: white;
-            border: 2px solid var(--gray-300);
-            color: var(--gray-700);
-            font-family: 'Rubik', sans-serif;
-            font-weight: 500;
-            transition: all var(--transition-base);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-        }
-        .google-btn:hover {
-            border-color: var(--primary-blue);
-            box-shadow: var(--shadow-sm);
-            transform: translateY(-2px);
-        }
-        .google-icon {
-            width: 18px;
-            height: 18px;
-        }
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 1.25rem 0;
-        }
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--gray-300);
-        }
-        .divider span {
-            padding: 0 1rem;
-            color: var(--gray-500);
-            font-size: 0.8rem;
-            font-weight: 500;
-            font-family: 'Rubik', sans-serif;
-        }
-        .alert-custom {
-            border-radius: 0.5rem;
-            border: none;
-            padding: 0.875rem 1rem;
-            margin-bottom: 1.25rem;
-            animation: slideDown 0.3s ease-out;
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: var(--gray-400);
-            transition: color var(--transition-base);
-        }
-        .password-toggle:hover {
-            color: var(--primary-blue);
-        }
-        .password-strength {
-            height: 3px;
-            border-radius: 2px;
-            background: var(--gray-200);
-            margin-top: 0.5rem;
-            overflow: hidden;
-        }
-        .password-strength-bar {
-            height: 100%;
-            transition: width 0.3s ease, background-color 0.3s ease;
-            width: 0;
-        }
-        .password-strength-bar.weak { background: var(--danger); width: 33%; }
-        .password-strength-bar.medium { background: var(--warning); width: 66%; }
-        .password-strength-bar.strong { background: var(--success); width: 100%; }
-        .auth-card {
-            padding: 2.5rem !important;
-            max-width: 480px !important;
-        }
-    </style>
+    <link rel="stylesheet" href="./assets/css/auth-styles.css">
 </head>
 <body>
     <div class="auth-wrapper">
         <div class="container">
             <!-- Back Button -->
-            <div class="mb-3" data-aos="fade-down" data-aos-duration="500">
+            <div class="mb-3" data-aos="fade-down" data-aos-duration="500" data-aos-delay="100">
                 <a href="index.html" class="btn btn-light shadow-sm" style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9);" data-testid="back-to-home-btn">
                     <i class="bi bi-arrow-left me-2"></i>Back to Home
                 </a>
             </div>
             
-            <div class="auth-card" data-aos="fade-up" data-aos-duration="500">
+            <div class="auth-card" data-aos="fade-up" data-aos-duration="600" data-aos-delay="200">
                 <div class="auth-header">
-                    <a href="index.html" class="d-inline-block mb-3">
+                    <a href="index.html" class="d-inline-block mb-2">
                         <h3 class="fw-bold mb-0">
                             <i class="bi bi-file-earmark-text text-primary"></i>
                             <span class="text-primary">Resume</span><span class="text-dark">Pro</span>
                         </h3>
                     </a>
-                    <h2 class="fw-bold mb-2" style="font-size: 1.75rem;">Create Your Account 🚀</h2>
-                    <p class="text-muted" style="font-size: 0.95rem;">Start building your professional resume today</p>
+                    <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">Create Your Account 🚀</h2>
+                    <p class="text-muted" style="font-size: 0.875rem;">Start building your professional resume today</p>
                 </div>
 
                 <!-- Alert Messages -->
@@ -151,19 +66,6 @@
                         </div>
 
                         <div class="col-12">
-                            <label for="phone" class="form-label fw-semibold">Phone Number</label>
-                            <input 
-                                type="tel" 
-                                class="form-control" 
-                                id="phone" 
-                                placeholder="9876543210" 
-                                required
-                                data-testid="register-phone-input"
-                            >
-                            <div class="invalid-feedback">Please enter a valid phone number</div>
-                        </div>
-
-                        <div class="col-12">
                             <label for="password" class="form-label fw-semibold">Password</label>
                             <div class="position-relative">
                                 <input 
@@ -185,15 +87,15 @@
                         </div>
                     </div>
 
-                    <div class="form-check mt-3">
+                    <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="terms" required data-testid="register-terms-checkbox">
-                        <label class="form-check-label" for="terms" style="font-size: 0.9rem;">
+                        <label class="form-check-label" for="terms" style="font-size: 0.875rem;">
                             I agree to the <a href="#" class="text-primary text-decoration-none">Terms & Conditions</a>
                         </label>
                         <div class="invalid-feedback">You must agree to the terms and conditions</div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 mt-3 mb-3" id="registerBtn" data-testid="register-submit-btn">
+                    <button type="submit" class="btn btn-primary w-100 mt-2 mb-2" id="registerBtn" data-testid="register-submit-btn">
                         <span id="registerBtnText">
                             <i class="bi bi-person-plus me-2"></i>Create Account
                         </span>
@@ -218,8 +120,8 @@
                         <span>Sign up with Google</span>
                     </button>
 
-                    <div class="text-center mt-3">
-                        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                    <div class="text-center mt-2">
+                        <p class="text-muted mb-0" style="font-size: 0.875rem;">
                             Already have an account? 
                             <a href="login.html" class="text-primary text-decoration-none fw-semibold">Login</a>
                         </p>
@@ -244,7 +146,6 @@
     <script src="./assets/js/auth-updated.js"></script>
     
     <script>
-        // Password visibility toggle
         function togglePasswordVisibility(inputId, iconId) {
             const passwordInput = document.getElementById(inputId);
             const toggleIcon = document.getElementById(iconId);
@@ -260,11 +161,12 @@
             }
         }
 
-        // Password strength indicator
         document.getElementById('password').addEventListener('input', function(e) {
             const password = e.target.value;
             const strengthBar = document.getElementById('passwordStrengthBar');
             const hint = document.getElementById('passwordHint');
+            
+            clearFieldError('password');
             
             let strength = 0;
             if (password.length >= 8) strength++;
@@ -292,7 +194,6 @@
             }
         });
 
-        // Show alert message
         function showAlert(message, type = 'danger') {
             const alertContainer = document.getElementById('alertContainer');
             const alertHTML = `
@@ -303,37 +204,107 @@
             `;
             alertContainer.innerHTML = alertHTML;
             
-            // Auto-hide after 5 seconds
             setTimeout(() => {
                 alertContainer.innerHTML = '';
             }, 5000);
         }
 
-        // Form submission
+        function clearAllErrors() {
+            document.getElementById('alertContainer').innerHTML = '';
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('.invalid-feedback').forEach(feedback => {
+                feedback.style.display = 'none';
+                feedback.textContent = '';
+            });
+        }
+
+        function clearFieldError(fieldId) {
+            const input = document.getElementById(fieldId);
+            if (input) {
+                input.classList.remove('is-invalid');
+                const feedback = input.parentElement.querySelector('.invalid-feedback') || 
+                                 input.closest('.col-12').querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.style.display = 'none';
+                }
+            }
+        }
+
+        function showFieldError(fieldId, message) {
+            const input = document.getElementById(fieldId);
+            if (input) {
+                input.classList.add('is-invalid');
+                const feedback = input.parentElement.querySelector('.invalid-feedback') || 
+                                 input.closest('.col-12').querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                    feedback.style.display = 'block';
+                }
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validateForm() {
+            clearAllErrors();
+            let isValid = true;
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const termsAccepted = document.getElementById('terms').checked;
+
+            if (!fullName || fullName.length < 2) {
+                showFieldError('fullName', 'Please enter your full name (minimum 2 characters)');
+                isValid = false;
+            }
+
+            if (!email) {
+                showFieldError('email', 'Email is required');
+                isValid = false;
+            } else if (!validateEmail(email)) {
+                showFieldError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            if (!password) {
+                showFieldError('password', 'Password is required');
+                isValid = false;
+            } else if (password.length < 8) {
+                showFieldError('password', 'Password must be at least 8 characters');
+                isValid = false;
+            }
+
+            if (!termsAccepted) {
+                showAlert('Please accept the terms and conditions', 'danger');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        ['fullName', 'email'].forEach(fieldId => {
+            document.getElementById(fieldId).addEventListener('input', function() {
+                clearFieldError(fieldId);
+            });
+        });
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Clear previous alerts
-            document.getElementById('alertContainer').innerHTML = '';
-            
+            if (!validateForm()) {
+                return;
+            }
+
             const fullName = document.getElementById('fullName').value.trim();
             const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
-            const termsAccepted = document.getElementById('terms').checked;
             
-            // Basic validation
-            if (!fullName || !email || !phone || !password) {
-                showAlert('Please fill in all fields', 'danger');
-                return;
-            }
-            
-            if (!termsAccepted) {
-                showAlert('Please accept the terms and conditions', 'danger');
-                return;
-            }
-            
-            // Disable button and show loader
             const registerBtn = document.getElementById('registerBtn');
             const registerBtnText = document.getElementById('registerBtnText');
             const registerBtnLoader = document.getElementById('registerBtnLoader');
@@ -343,37 +314,51 @@
             registerBtnLoader.classList.remove('d-none');
             
             try {
-                // Call auth service
                 const result = await authService.signup({
                     fullName,
                     email,
-                    phone,
                     password
                 });
                 
                 if (result.success) {
                     showAlert('Account created successfully! Redirecting...', 'success');
                     
-                    // Redirect after 1.5 seconds
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        const role = result.data?.user?.role || 'user';
+                        if (role === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
                     }, 1500);
                 } else {
-                    showAlert(result.message || 'Registration failed. Please try again.', 'danger');
+                    if (result.statusCode === 422 && result.errors && result.errors.length > 0) {
+                        const firstError = result.errors[0];
+                        showFieldError(firstError.field, firstError.message);
+                    } else {
+                        showAlert(result.message || 'Registration failed. Please try again.', 'danger');
+                    }
+                    
                     registerBtn.disabled = false;
                     registerBtnText.classList.remove('d-none');
                     registerBtnLoader.classList.add('d-none');
                 }
             } catch (error) {
                 console.error('Registration error:', error);
-                showAlert(error.message || 'Registration failed. Please try again.', 'danger');
+                
+                if (error.statusCode === 422 && error.errors && error.errors.length > 0) {
+                    const firstError = error.errors[0];
+                    showFieldError(firstError.field, firstError.message);
+                } else {
+                    showAlert(error.message || 'Registration failed. Please try again.', 'danger');
+                }
+                
                 registerBtn.disabled = false;
                 registerBtnText.classList.remove('d-none');
                 registerBtnLoader.classList.add('d-none');
             }
         });
 
-        // Google Sign-up
         document.querySelector('[data-testid="google-signup-btn"]').addEventListener('click', function() {
             showAlert('Google Sign-up is coming soon! Please use email registration for now.', 'info');
         });

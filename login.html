@@ -10,98 +10,28 @@
     <!-- Google Fonts - Rubik -->
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
-    <style>
-        .google-btn {
-            background: white;
-            border: 2px solid var(--gray-300);
-            color: var(--gray-700);
-            font-family: 'Rubik', sans-serif;
-            font-weight: 500;
-            transition: all var(--transition-base);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-        }
-        .google-btn:hover {
-            border-color: var(--primary-blue);
-            box-shadow: var(--shadow-sm);
-            transform: translateY(-2px);
-        }
-        .google-icon {
-            width: 18px;
-            height: 18px;
-        }
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 1.25rem 0;
-        }
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--gray-300);
-        }
-        .divider span {
-            padding: 0 1rem;
-            color: var(--gray-500);
-            font-size: 0.8rem;
-            font-weight: 500;
-            font-family: 'Rubik', sans-serif;
-        }
-        .alert-custom {
-            border-radius: 0.5rem;
-            border: none;
-            padding: 0.875rem 1rem;
-            margin-bottom: 1.25rem;
-            animation: slideDown 0.3s ease-out;
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: var(--gray-400);
-            transition: color var(--transition-base);
-        }
-        .password-toggle:hover {
-            color: var(--primary-blue);
-        }
-        .auth-card {
-            padding: 2.5rem !important;
-            max-width: 440px !important;
-        }
-    </style>
+    <link rel="stylesheet" href="./assets/css/auth-styles.css">
 </head>
 <body>
     <div class="auth-wrapper">
         <div class="container">
             <!-- Back Button -->
-            <div class="mb-3" data-aos="fade-down" data-aos-duration="500">
+            <div class="mb-3" data-aos="fade-down" data-aos-duration="500" data-aos-delay="100">
                 <a href="index.html" class="btn btn-light shadow-sm" style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9);" data-testid="back-to-home-btn">
                     <i class="bi bi-arrow-left me-2"></i>Back to Home
                 </a>
             </div>
             
-            <div class="auth-card" data-aos="fade-up" data-aos-duration="500">
+            <div class="auth-card" data-aos="fade-up" data-aos-duration="600" data-aos-delay="200">
                 <div class="auth-header">
-                    <a href="index.html" class="d-inline-block mb-3">
+                    <a href="index.html" class="d-inline-block mb-2">
                         <h3 class="fw-bold mb-0">
                             <i class="bi bi-file-earmark-text text-primary"></i>
                             <span class="text-primary">Resume</span><span class="text-dark">Pro</span>
                         </h3>
                     </a>
-                    <h2 class="fw-bold mb-2" style="font-size: 1.75rem;">Welcome Back! 👋</h2>
-                    <p class="text-muted" style="font-size: 0.95rem;">Login to continue building your career</p>
+                    <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">Welcome Back! 👋</h2>
+                    <p class="text-muted" style="font-size: 0.875rem;">Login to continue building your career</p>
                 </div>
 
                 <!-- Alert Messages -->
@@ -140,14 +70,14 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="remember" data-testid="login-remember-checkbox">
-                            <label class="form-check-label" for="remember" style="font-size: 0.9rem;">
+                            <label class="form-check-label" for="remember" style="font-size: 0.875rem;">
                                 Remember me
                             </label>
                         </div>
-                        <a href="#" class="text-primary text-decoration-none fw-semibold" style="font-size: 0.9rem;">Forgot password?</a>
+                        <a href="#" class="text-primary text-decoration-none fw-semibold" style="font-size: 0.875rem;">Forgot password?</a>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn" data-testid="login-submit-btn">
+                    <button type="submit" class="btn btn-primary w-100 mb-2" id="loginBtn" data-testid="login-submit-btn">
                         <span id="loginBtnText">
                             <i class="bi bi-box-arrow-in-right me-2"></i>Login
                         </span>
@@ -172,8 +102,8 @@
                         <span>Sign in with Google</span>
                     </button>
 
-                    <div class="text-center mt-3">
-                        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                    <div class="text-center mt-2">
+                        <p class="text-muted mb-0" style="font-size: 0.875rem;">
                             Don't have an account? 
                             <a href="register.html" class="text-primary text-decoration-none fw-semibold">Sign up</a>
                         </p>
@@ -198,7 +128,6 @@
     <script src="./assets/js/auth-updated.js"></script>
     
     <script>
-        // Password visibility toggle
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
             const toggleIcon = document.getElementById('togglePassword');
@@ -214,41 +143,102 @@
             }
         }
 
-        // Show alert message
         function showAlert(message, type = 'danger') {
             const alertContainer = document.getElementById('alertContainer');
             const alertHTML = `
                 <div class="alert alert-${type} alert-custom d-flex align-items-center" role="alert">
-                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'info' ? 'info-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
                     <div>${message}</div>
                 </div>
             `;
             alertContainer.innerHTML = alertHTML;
             
-            // Auto-hide after 5 seconds
             setTimeout(() => {
                 alertContainer.innerHTML = '';
             }, 5000);
         }
 
-        // Form submission
+        function clearAllErrors() {
+            document.getElementById('alertContainer').innerHTML = '';
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('.invalid-feedback').forEach(feedback => {
+                feedback.style.display = 'none';
+                feedback.textContent = '';
+            });
+        }
+
+        function clearFieldError(fieldId) {
+            const input = document.getElementById(fieldId);
+            if (input) {
+                input.classList.remove('is-invalid');
+                const feedback = input.parentElement.querySelector('.invalid-feedback') || 
+                                 input.closest('.mb-3').querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.style.display = 'none';
+                }
+            }
+        }
+
+        function showFieldError(fieldId, message) {
+            const input = document.getElementById(fieldId);
+            if (input) {
+                input.classList.add('is-invalid');
+                const feedback = input.parentElement.querySelector('.invalid-feedback') || 
+                                 input.closest('.mb-3').querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                    feedback.style.display = 'block';
+                }
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validateForm() {
+            clearAllErrors();
+            let isValid = true;
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email) {
+                showFieldError('email', 'Email is required');
+                isValid = false;
+            } else if (!validateEmail(email)) {
+                showFieldError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            if (!password) {
+                showFieldError('password', 'Password is required');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        ['email', 'password'].forEach(fieldId => {
+            document.getElementById(fieldId).addEventListener('input', function() {
+                clearFieldError(fieldId);
+            });
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Clear previous alerts
-            document.getElementById('alertContainer').innerHTML = '';
+            if (!validateForm()) {
+                return;
+            }
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const remember = document.getElementById('remember').checked;
             
-            // Basic validation
-            if (!email || !password) {
-                showAlert('Please fill in all fields', 'danger');
-                return;
-            }
-            
-            // Disable button and show loader
             const loginBtn = document.getElementById('loginBtn');
             const loginBtnText = document.getElementById('loginBtnText');
             const loginBtnLoader = document.getElementById('loginBtnLoader');
@@ -258,37 +248,58 @@
             loginBtnLoader.classList.remove('d-none');
             
             try {
-                // Call auth service
                 const result = await authService.login({ email, password });
                 
                 if (result.success) {
                     showAlert('Login successful! Redirecting...', 'success');
                     
-                    // Save remember me preference
+                    if (result.data?.accessToken) {
+                        localStorage.setItem('accessToken', result.data.accessToken);
+                    }
+                    if (result.data?.refreshToken) {
+                        localStorage.setItem('refreshToken', result.data.refreshToken);
+                    }
+                    
                     if (remember) {
                         localStorage.setItem('rememberMe', 'true');
                     }
                     
-                    // Redirect after 1 second
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        const role = result.data?.user?.role || 'user';
+                        if (role === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
                     }, 1000);
                 } else {
-                    showAlert(result.message || 'Invalid email or password', 'danger');
+                    if (result.statusCode === 422 && result.errors && result.errors.length > 0) {
+                        const firstError = result.errors[0];
+                        showFieldError(firstError.field, firstError.message);
+                    } else {
+                        showAlert(result.message || 'Invalid email or password', 'danger');
+                    }
+                    
                     loginBtn.disabled = false;
                     loginBtnText.classList.remove('d-none');
                     loginBtnLoader.classList.add('d-none');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showAlert(error.message || 'Login failed. Please try again.', 'danger');
+                
+                if (error.statusCode === 422 && error.errors && error.errors.length > 0) {
+                    const firstError = error.errors[0];
+                    showFieldError(firstError.field, firstError.message);
+                } else {
+                    showAlert(error.message || 'Login failed. Please try again.', 'danger');
+                }
+                
                 loginBtn.disabled = false;
                 loginBtnText.classList.remove('d-none');
                 loginBtnLoader.classList.add('d-none');
             }
         });
 
-        // Google Sign-in
         document.querySelector('[data-testid="google-signin-btn"]').addEventListener('click', function() {
             showAlert('Google Sign-in is coming soon! Please use email login for now.', 'info');
         });
