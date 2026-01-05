@@ -1,0 +1,421 @@
+/* ===================================
+   HORIZONTAL DASHBOARD STYLES
+   Compact & Modern Design
+   =================================== */
+
+/* Body */
+.dashboard-body {
+    background: var(--gray-50);
+    font-family: 'Rubik', sans-serif;
+}
+
+/* Top Navigation Bar */
+.dashboard-navbar {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.dashboard-navbar .navbar-brand {
+    font-size: 1.25rem;
+}
+
+.dashboard-navbar .navbar-brand i {
+    font-size: 1.5rem;
+    vertical-align: middle;
+}
+
+.dashboard-navbar .nav-link {
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all var(--transition-base);
+    color: var(--gray-700);
+}
+
+.dashboard-navbar .nav-link:hover {
+    background: var(--gray-100);
+    color: var(--primary-blue);
+}
+
+.dashboard-navbar .nav-link.active {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.dashboard-navbar .nav-link i {
+    font-size: 1rem;
+}
+
+/* User Avatar Small */
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: inline-block;
+}
+
+/* Main Content */
+.dashboard-main {
+    min-height: calc(100vh - 70px);
+    padding-top: 1rem;
+}
+
+/* Welcome Section */
+.welcome-section {
+    padding: 1.5rem;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Quick Action Cards */
+.quick-action-card {
+    padding: 1.25rem;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    border: 2px solid transparent;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-blue);
+}
+
+.quick-action-card .action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.quick-action-card .action-icon i {
+    font-size: 1.5rem;
+}
+
+.quick-action-card h6 {
+    font-size: 0.95rem;
+}
+
+.quick-action-card p {
+    font-size: 0.8rem;
+}
+
+/* Stat Cards */
+.stat-card {
+    padding: 1.25rem;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all var(--transition-base);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-card .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 0.5rem;
+    background: var(--primary-blue);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-card .stat-icon i {
+    font-size: 1.75rem;
+    color: white;
+}
+
+.stat-card h3 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card p {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+/* Content Cards */
+.content-card {
+    padding: 1.5rem;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.content-card h5 {
+    font-size: 1.1rem;
+}
+
+/* Resume Card (Compact) */
+.resume-card-compact {
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    border: 2px solid var(--gray-200);
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.resume-card-compact:hover {
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.resume-card-compact .resume-thumbnail-small {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.resume-card-compact .resume-thumbnail-small i {
+    font-size: 2.5rem;
+    color: var(--gray-400);
+}
+
+.resume-card-compact h6 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.resume-card-compact .resume-meta {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.resume-card-compact .resume-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.resume-card-compact .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+/* Job Card (Compact) */
+.job-card-compact {
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    border: 2px solid var(--gray-200);
+    margin-bottom: 0.75rem;
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.job-card-compact:last-child {
+    margin-bottom: 0;
+}
+
+.job-card-compact:hover {
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(4px);
+}
+
+.job-card-compact .job-header {
+    display: flex;
+    
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.job-card-compact .job-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.375rem;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.job-card-compact .job-logo i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.job-card-compact h6 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.job-card-compact .company-name {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+}
+
+.job-card-compact .job-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-bottom: 0.75rem;
+}
+
+.job-card-compact .job-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Plan Card */
+.plan-card {
+    padding: 1.25rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    border: 2px solid var(--gray-200);
+}
+
+.plan-card .plan-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plan-card .plan-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.plan-card .plan-features {
+    font-size: 0.85rem;
+}
+
+.plan-card .feature-item {
+    padding: 0.375rem 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Tips List */
+.tips-list {
+    font-size: 0.9rem;
+}
+
+.tip-item {
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.tip-item:last-child {
+    margin-bottom: 0;
+}
+
+.tip-item i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--gray-300);
+    margin-bottom: 1rem;
+}
+
+.empty-state h6 {
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--gray-500);
+    font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.welcome-section,
+.quick-action-card,
+.stat-card,
+.content-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .dashboard-navbar .navbar-nav.mx-auto {
+        margin: 1rem 0 !important;
+    }
+    
+    .dashboard-navbar .nav-link {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .dashboard-main {
+        padding-top: 0.5rem;
+    }
+    
+    .welcome-section {
+        padding: 1rem;
+    }
+    
+    .quick-action-card {
+        padding: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .content-card {
+        padding: 1rem;
+    }
+}
+
+
