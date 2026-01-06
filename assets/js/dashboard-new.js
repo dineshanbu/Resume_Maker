@@ -8,8 +8,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load user data
     loadUserData();
+    loadRecentActivityCarousel();
     loadRecentResumes();
-    loadRecentJobs();
+    loadOpportunities();
+    initCircularProgress();
+    
+    // Add page fade-in animation
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+        document.body.style.transition = 'opacity 0.5s ease';
+        document.body.style.opacity = '1';
+    }, 100);
 });
 
 function loadUserData() {
@@ -36,6 +45,52 @@ function loadUserData() {
     if (userResumes.length > 0) completion += 20;
     if (user.phone) completion += 15;
     document.getElementById('profileCompletion').textContent = Math.min(completion, 100) + '%';
+}
+
+function loadRecentActivityCarousel() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+    const userResumes = resumes.filter(r => r.userId === user.email).slice(0, 4);
+    
+    const container = document.getElementById('carouselTrack');
+    
+    let carouselHTML = '';
+    
+    // Add existing resumes
+    userResumes.forEach(resume => {
+        carouselHTML += `
+            <div class="carousel-item-card" onclick="window.location.href='resume-builder.html?id=${resume.id}'">
+                <div class="carousel-item-thumbnail">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Add "Create Resume" card
+    carouselHTML += `
+        <div class="carousel-item-card" onclick="window.location.href='resume-builder.html'">
+            <div class="carousel-item-thumbnail carousel-item-create">
+                <i class="bi bi-plus-circle"></i>
+                <div class="carousel-item-create-text">Create Resume</div>
+            </div>
+        </div>
+    `;
+    
+    // Add 3 more empty placeholder cards
+    for (let i = 0; i < 3; i++) {
+        carouselHTML += `
+            <div class="carousel-item-card">
+                <div class="carousel-item-thumbnail">
+                    <i class="bi bi-file-earmark"></i>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = carouselHTML;
 }
 
 function loadRecentResumes() {
@@ -142,6 +197,86 @@ function loadRecentJobs() {
             </div>
         </div>
     `).join('');
+}
+
+function loadOpportunities() {
+    const opportunities = [
+        {
+            id: 1,
+            title: 'Product Designer',
+            company: 'Google',
+            location: 'Bangalore',
+            experience: '3-5 Years',
+            salary: '₹ 55.15-33 LPA',
+            posted: '2 days ago'
+        },
+        {
+            id: 2,
+            title: 'Product Designer',
+            company: 'Amazon',
+            location: 'Maratham',
+            experience: '2-4 Years',
+            salary: '₹ 5555.33 LPA',
+            posted: '3 days ago'
+        },
+        {
+            id: 3,
+            title: 'Product Designer',
+            company: 'Armosoft',
+            location: 'Mantipolam',
+            experience: '3-5 Years',
+            salary: '₹ 05.15-33 LPA',
+            posted: '3 days ago'
+        },
+        {
+            id: 4,
+            title: 'Marketing M',
+            company: 'Etosnerle',
+            location: 'Masittilen',
+            experience: '1-3 Years',
+            salary: '₹ 5825',
+            posted: '3 days ago'
+        }
+    ];
+    
+    const container = document.getElementById('opportunitiesList');
+    
+    container.innerHTML = opportunities.map(opp => `
+        <div class="col-md-6">
+            <div class="opportunity-card" onclick="window.location.href='jobs.html'">
+                <div class="opportunity-header">
+                    <div class="opportunity-logo">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="opportunity-title">${opp.title}</div>
+                        <div class="opportunity-company">${opp.company}</div>
+                    </div>
+                </div>
+                <div class="opportunity-meta">
+                    <span><i class="bi bi-geo-alt"></i>${opp.location}</span>
+                    <span><i class="bi bi-clock"></i>${opp.experience}</span>
+                    <span><i class="bi bi-currency-rupee"></i>${opp.salary}</span>
+                </div>
+                <div class="opportunity-footer">
+                    <div class="opportunity-posted">${opp.posted}</div>
+                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation()">Apply Now</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function initCircularProgress() {
+    const circle = document.getElementById('progressCircle');
+    const progressValue = 92; // 92% as shown in the image
+    const circumference = 2 * Math.PI * 70;
+    const offset = circumference - (progressValue / 100) * circumference;
+    
+    // Animate the circle
+    setTimeout(() => {
+        circle.style.strokeDashoffset = offset;
+    }, 500);
 }
 
 function formatDate(dateString) {
