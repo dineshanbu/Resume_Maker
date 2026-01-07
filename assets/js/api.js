@@ -160,7 +160,7 @@ class APIHandler {
 }
 
 // Create singleton instance
-const apiHandler = new APIHandler();
+const apiService = new APIHandler();
 
-// Export globally
-window.apiHandler = apiHandler;
+// Export globally - SINGLE SOURCE OF TRUTH
+window.apiService = apiService;

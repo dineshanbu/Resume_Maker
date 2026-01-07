@@ -126,8 +126,8 @@ class AuthManager {
             }
 
             // Call API logout if available
-            if (window.apiHandler) {
-                await apiHandler.logout();
+            if (window.apiService) {
+                await apiService.logout();
             }
 
             // Clear auth data
@@ -176,6 +176,28 @@ class AuthManager {
         }
 
         console.log('✅ Auth data saved:', { hasToken: !!token, role });
+    }
+
+    // ========================================
+    // GET CURRENT USER (for display purposes)
+    // ========================================
+
+    getCurrentUser() {
+        const token = this.getToken();
+        if (!token) return null;
+
+        try {
+            const payload = this.decodeJWT(token);
+            return {
+                name: payload.name || payload.fullName || 'User',
+                email: payload.email,
+                role: payload.role || this.getUserRole(),
+                plan: payload.plan || 'Free'
+            };
+        } catch (e) {
+            console.error('Error getting current user:', e);
+            return null;
+        }
     }
 }
 

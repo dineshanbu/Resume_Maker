@@ -28,10 +28,14 @@ class AdminPanel {
 
     loadAdminInfo() {
         const user = authManager.getCurrentUser();
-        if (user) {
-            document.getElementById('adminName').textContent = user.name || 'Admin User';
-            const firstLetter = (user.name || 'Admin').charAt(0).toUpperCase();
+        if (user && user.name) {
+            document.getElementById('adminName').textContent = user.name;
+            const firstLetter = user.name.charAt(0).toUpperCase();
             document.getElementById('adminAvatar').textContent = firstLetter;
+        } else {
+            // Fallback if getCurrentUser returns null or no name
+            document.getElementById('adminName').textContent = 'Admin User';
+            document.getElementById('adminAvatar').textContent = 'A';
         }
     }
 

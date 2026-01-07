@@ -5,6 +5,16 @@ const TemplatesController = {
     loading: false,
 
     async render(container) {
+        // FAIL-SAFE: Check if apiService exists
+        if (typeof window.apiService === 'undefined') {
+            console.error('❌ apiService is not defined - cannot load templates');
+            container.innerHTML = this.getErrorHTML('API Service not available. Please refresh the page.');
+            if (window.AlertUtil) {
+                AlertUtil.showError('System error: API service unavailable. Please refresh the page.');
+            }
+            return;
+        }
+
         container.innerHTML = this.getLoadingHTML();
         await this.loadTemplates();
         container.innerHTML = this.getTemplatesHTML();
@@ -25,6 +35,12 @@ const TemplatesController = {
             }
         } catch (error) {
             console.error('Error loading templates:', error);
+            
+            // Show error alert if AlertUtil is available
+            if (window.AlertUtil) {
+                AlertUtil.showError('Failed to load templates: ' + error.message);
+            }
+            
             this.templates = [];
         } finally {
             this.loading = false;
@@ -232,13 +248,32 @@ const TemplatesController = {
         const template = this.templates.find(t => (t._id || t.id) === templateId);
         if (!template) return;
 
-        alert(`Template: ${template.displayName || template.name}\n\nCategory: ${template.category}\nProfession: ${template.profession}\nTier: ${template.subscriptionTier}\nStatus: ${template.isActive ? 'Active' : 'Inactive'}`);
+        // Use AlertUtil if available, otherwise fallback to alert
+        if (window.AlertUtil) {
+            AlertUtil.showInfo(
+                `Category: ${template.category}\nProfession: ${template.profession}\nTier: ${template.subscriptionTier}\nStatus: ${template.isActive ? 'Active' : 'Inactive'}`,
+                template.displayName || template.name
+            );
+        } else {
+            alert(`Template: ${template.displayName || template.name}\n\nCategory: ${template.category}\nProfession: ${template.profession}\nTier: ${template.subscriptionTier}\nStatus: ${template.isActive ? 'Active' : 'Inactive'}`);
+        }
     },
 
     async toggleStatus(templateId, newStatus) {
-        if (!confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this template?`)) {
-            return;
+        // Use AlertUtil for confirmation if available
+        let confirmed = false;
+        if (window.AlertUtil) {
+            confirmed = await AlertUtil.showConfirm(
+                `Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this template?`,
+                'Confirm Action',
+                'Yes',
+                'No'
+            );
+        } else {
+            confirmed = confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this template?`);
         }
+
+        if (!confirmed) return;
 
         try {
             const response = await apiService.put(`/api/v1/admin/templates/${templateId}`, {
@@ -246,7 +281,13 @@ const TemplatesController = {
             });
 
             if (response.success || response.data) {
-                alert('Template status updated successfully!');
+                // Show success with AlertUtil
+                if (window.AlertUtil) {
+                    await AlertUtil.showSuccess('Template status updated successfully!');
+                } else {
+                    alert('Template status updated successfully!');
+                }
+                
                 // Reload the view
                 const container = document.getElementById('adminContent');
                 await this.render(container);
@@ -255,7 +296,26 @@ const TemplatesController = {
             }
         } catch (error) {
             console.error('Error updating template:', error);
-            alert('Failed to update template status: ' + error.message);
+            
+            // Show error with AlertUtil
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Failed to update template status: ' + error.message);
+            } else {
+                alert('Failed to update template status: ' + error.message);
+            }
         }
+    },
+
+    getErrorHTML(message) {
+        return `
+            <div class="content-card text-center" style="padding: 4rem 2rem;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+                <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Error Loading Templates</h2>
+                <p style="color: var(--text-secondary); font-size: 1rem;">${message}</p>
+                <button class="btn btn-primary mt-3" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Page
+                </button>
+            </div>
+        `;
     }
 };

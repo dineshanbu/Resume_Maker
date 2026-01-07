@@ -251,7 +251,7 @@
             
             try {
                 // Use centralized API handler
-                const result = await apiHandler.login(email, password);
+                const result = await apiService.login(email, password);
                 
                 if (result.success && result.data) {
                     // Save auth data using centralized auth manager

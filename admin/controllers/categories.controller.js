@@ -4,6 +4,16 @@ const CategoriesController = {
     categories: [],
 
     async render(container) {
+        // FAIL-SAFE: Check if apiService exists
+        if (typeof window.apiService === 'undefined') {
+            console.error('❌ apiService is not defined - cannot load categories');
+            container.innerHTML = this.getErrorHTML('API Service not available. Please refresh the page.');
+            if (window.AlertUtil) {
+                AlertUtil.showError('System error: API service unavailable. Please refresh the page.');
+            }
+            return;
+        }
+
         container.innerHTML = this.getLoadingHTML();
         await this.loadCategories();
         container.innerHTML = this.getCategoriesHTML();
@@ -25,6 +35,12 @@ const CategoriesController = {
             this.categories = this.groupTemplates(templates);
         } catch (error) {
             console.error('Error loading categories:', error);
+            
+            // Show error alert if AlertUtil is available
+            if (window.AlertUtil) {
+                AlertUtil.showError('Failed to load categories: ' + error.message);
+            }
+            
             this.categories = [];
         }
     },
@@ -169,6 +185,19 @@ const CategoriesController = {
                     <i class="bi bi-plus-circle"></i>
                     Create Your First Template
                 </a>
+            </div>
+        `;
+    },
+
+    getErrorHTML(message) {
+        return `
+            <div class="content-card text-center" style="padding: 4rem 2rem;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+                <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Error Loading Categories</h2>
+                <p style="color: var(--text-secondary); font-size: 1rem;">${message}</p>
+                <button class="btn btn-primary mt-3" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Page
+                </button>
             </div>
         `;
     }

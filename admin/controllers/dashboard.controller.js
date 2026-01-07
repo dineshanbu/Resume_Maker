@@ -5,6 +5,16 @@ const DashboardController = {
     recentTemplates: [],
 
     async render(container) {
+        // FAIL-SAFE: Check if apiService exists
+        if (typeof window.apiService === 'undefined') {
+            console.error('❌ apiService is not defined - cannot load dashboard');
+            container.innerHTML = this.getErrorHTML('API Service not available. Please refresh the page.');
+            if (window.AlertUtil) {
+                AlertUtil.showError('System error: API service unavailable. Please refresh the page.');
+            }
+            return;
+        }
+
         container.innerHTML = this.getLoadingHTML();
         await this.loadDashboardData();
         container.innerHTML = this.getDashboardHTML();
@@ -43,6 +53,12 @@ const DashboardController = {
             }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
+            
+            // Show error alert if AlertUtil is available
+            if (window.AlertUtil) {
+                AlertUtil.showError('Failed to load dashboard data: ' + error.message);
+            }
+            
             // Use mock data on error
             this.stats = {
                 totalTemplates: 24,
@@ -200,6 +216,19 @@ const DashboardController = {
                 <a href="#create-template" class="btn-primary-gradient mt-2">
                     <i class="bi bi-plus-circle"></i> Create Your First Template
                 </a>
+            </div>
+        `;
+    },
+
+    getErrorHTML(message) {
+        return `
+            <div class="content-card text-center" style="padding: 4rem 2rem;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+                <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Error Loading Dashboard</h2>
+                <p style="color: var(--text-secondary); font-size: 1rem;">${message}</p>
+                <button class="btn btn-primary mt-3" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Page
+                </button>
             </div>
         `;
     }
