@@ -92,7 +92,15 @@ class AuthService {
         } finally {
             // Clear local storage regardless of API response
             this.apiService.clearTokens();
-            window.location.href = 'login.html';
+            
+            // Redirect to landing page and prevent back navigation
+            window.location.replace('index.html');
+            
+            // Additional measure to prevent back button
+            window.history.pushState(null, '', 'index.html');
+            window.addEventListener('popstate', function() {
+                window.history.pushState(null, '', 'index.html');
+            });
         }
     }
 
@@ -157,7 +165,7 @@ class AuthService {
 
         const user = this.getCurrentUser();
         if (!user || user.role !== 'admin') {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'user-dashboard.html';
             return false;
         }
 
