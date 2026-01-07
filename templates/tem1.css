@@ -1,0 +1,351 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #333;
+    background: #fff;
+}
+
+.resume-container {
+    max-width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 20mm 15mm;
+    background: white;
+    position: relative;
+}
+
+.header {
+    margin-bottom: 25px;
+}
+
+.name {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+.job-title {
+    font-size: 11pt;
+    color: #0066cc;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.contact-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 9pt;
+    color: #666;
+}
+
+.contact-item {
+    position: relative;
+}
+
+.contact-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 3px;
+    background: #999;
+    border-radius: 50%;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+}
+
+.section {
+    margin-bottom: 22px;
+}
+
+.section-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.section-divider {
+    width: 100%;
+    height: 2px;
+    background: #0066cc;
+    margin-bottom: 12px;
+}
+
+.summary-text {
+    font-size: 9.5pt;
+    line-height: 1.5;
+    color: #444;
+    text-align: justify;
+}
+
+.experience-item {
+    margin-bottom: 18px;
+}
+
+.experience-item:last-child {
+    margin-bottom: 0;
+}
+
+.experience-role {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.experience-meta {
+    font-size: 9pt;
+    color: #666;
+    margin-bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.company {
+    color: #0066cc;
+    font-weight: 600;
+}
+
+.duration::before,
+.location::before {
+    content: '●';
+    margin-right: 6px;
+    font-size: 6pt;
+    vertical-align: middle;
+}
+
+.responsibilities {
+    list-style: none;
+    padding-left: 0;
+}
+
+.responsibilities li {
+    font-size: 9pt;
+    line-height: 1.5;
+    color: #444;
+    margin-bottom: 4px;
+    padding-left: 12px;
+    position: relative;
+}
+
+.responsibilities li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #0066cc;
+    font-weight: bold;
+}
+
+.education-item {
+    margin-bottom: 16px;
+}
+
+.education-item:last-child {
+    margin-bottom: 0;
+}
+
+.degree {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+}
+
+.institution {
+    font-size: 9.5pt;
+    color: #0066cc;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.edu-location,
+.edu-year {
+    font-size: 8.5pt;
+    color: #666;
+    margin-bottom: 1px;
+}
+
+.gpa {
+    font-size: 8.5pt;
+    color: #666;
+    margin-top: 3px;
+}
+
+.honors {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 6px;
+}
+
+.honors li {
+    font-size: 8.5pt;
+    color: #444;
+    padding-left: 10px;
+    position: relative;
+    margin-bottom: 2px;
+}
+
+.honors li::before {
+    content: '○';
+    position: absolute;
+    left: 0;
+    color: #0066cc;
+    font-size: 7pt;
+}
+
+.skill-category {
+    margin-bottom: 10px;
+}
+
+.skill-category-name {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 5px;
+}
+
+.skill-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.skill-item {
+    background: #f0f0f0;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 8.5pt;
+    color: #333;
+    font-weight: 500;
+}
+
+.strengths-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.strengths-list li {
+    font-size: 9pt;
+    line-height: 1.5;
+    color: #444;
+    margin-bottom: 8px;
+    padding-left: 12px;
+    position: relative;
+}
+
+.strengths-list li::before {
+    content: '▪';
+    position: absolute;
+    left: 0;
+    color: #0066cc;
+    font-weight: bold;
+}
+
+.language-item {
+    margin-bottom: 12px;
+}
+
+.language-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.language-name {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.proficiency-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #0066cc;
+    background: transparent;
+}
+
+.dot.filled {
+    background: #0066cc;
+}
+
+.proficiency-level {
+    font-size: 8.5pt;
+    color: #666;
+}
+
+.footer {
+    position: absolute;
+    bottom: 15mm;
+    right: 15mm;
+    font-size: 7pt;
+    color: #999;
+}
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .resume-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 15mm;
+        box-shadow: none;
+    }
+    
+    .section {
+        page-break-inside: avoid;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .resume-container {
+        padding: 15px;
+    }
+    
+    .content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .name {
+        font-size: 22pt;
+    }
+    
+    .contact-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .contact-item:not(:last-child)::after {
+        display: none;
+    }
+}

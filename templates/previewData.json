@@ -1,0 +1,214 @@
+{
+  "personalInfo": {
+    "fullName": "Alexandra Mitchell",
+    "jobTitle": "Senior Full-Stack Software Engineer",
+    "email": "alex.mitchell@email.com",
+    "phone": "+1 (555) 123-4567",
+    "location": "San Francisco, CA",
+    "linkedin": "linkedin.com/in/alexandramitchell",
+    "portfolio": "alexandramitchell.dev"
+  },
+  "summary": "Results-driven Full-Stack Software Engineer with 7+ years of experience building scalable web applications and cloud-native solutions. Expert in React, Node.js, and AWS with a proven track record of leading cross-functional teams to deliver high-impact products. Passionate about clean code, system design, and mentoring junior developers. Successfully reduced application load time by 65% and increased user engagement by 40% through strategic technical improvements.",
+  "experience": [
+    {
+      "role": "Senior Software Engineer",
+      "company": "TechCorp Solutions",
+      "location": "San Francisco, CA",
+      "duration": "Jan 2021 - Present",
+      "responsibilities": [
+        "Led development of a microservices-based e-commerce platform serving 2M+ users, resulting in 45% increase in conversion rates",
+        "Architected and implemented CI/CD pipeline using Jenkins and Docker, reducing deployment time from 2 hours to 15 minutes",
+        "Mentored team of 5 junior developers, conducting code reviews and technical workshops to improve code quality by 60%",
+        "Optimized database queries and implemented Redis caching, improving API response time by 70%",
+        "Collaborated with product managers and designers to deliver 15+ features using Agile methodology"
+      ]
+    },
+    {
+      "role": "Full-Stack Developer",
+      "company": "InnovateTech Inc.",
+      "location": "San Jose, CA",
+      "duration": "Mar 2019 - Dec 2020",
+      "responsibilities": [
+        "Developed and maintained 20+ RESTful APIs using Node.js and Express, handling 100K+ daily requests",
+        "Built responsive web applications with React and TypeScript, improving mobile user experience by 55%",
+        "Implemented automated testing suite with Jest and Cypress, achieving 85% code coverage",
+        "Integrated third-party payment systems (Stripe, PayPal) processing $5M+ in annual transactions",
+        "Participated in on-call rotation and resolved production incidents with 99.9% uptime SLA"
+      ]
+    },
+    {
+      "role": "Junior Software Developer",
+      "company": "StartupHub Labs",
+      "location": "Palo Alto, CA",
+      "duration": "Jun 2017 - Feb 2019",
+      "responsibilities": [
+        "Developed customer-facing features for SaaS platform using React and Redux, serving 50K+ active users",
+        "Created data visualization dashboards with D3.js and Chart.js for business analytics",
+        "Worked with PostgreSQL databases, writing complex queries and optimizing performance",
+        "Collaborated with UX designers to implement pixel-perfect, accessible UI components",
+        "Participated in Agile ceremonies and contributed to sprint planning and retrospectives"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Cloud Task Manager Pro",
+      "description": "A real-time collaborative task management application with advanced analytics and team collaboration features. Built with modern web technologies and deployed on AWS infrastructure with auto-scaling capabilities.",
+      "technologies": ["React", "TypeScript", "Node.js", "MongoDB", "Socket.io", "AWS", "Docker"],
+      "link": "github.com/alex/cloud-task-manager",
+      "achievements": [
+        "Implemented real-time synchronization across devices using WebSocket technology",
+        "Achieved 99.99% uptime with AWS ECS and load balancing",
+        "Integrated AI-powered task prioritization using TensorFlow.js"
+      ]
+    },
+    {
+      "name": "E-Commerce Analytics Dashboard",
+      "description": "Comprehensive analytics platform for e-commerce businesses providing real-time insights into sales, customer behavior, and inventory management. Features interactive visualizations and customizable reporting.",
+      "technologies": ["Vue.js", "Python", "FastAPI", "PostgreSQL", "Redis", "Elasticsearch"],
+      "link": "github.com/alex/analytics-dashboard",
+      "achievements": [
+        "Processed and visualized 10M+ data points with sub-second query performance",
+        "Implemented machine learning models for sales forecasting with 92% accuracy",
+        "Created customizable dashboard with drag-and-drop widget functionality"
+      ]
+    },
+    {
+      "name": "Open-Source API Gateway",
+      "description": "High-performance API gateway written in Go with support for rate limiting, authentication, load balancing, and request transformation. Used by 500+ developers worldwide.",
+      "technologies": ["Go", "Kubernetes", "Prometheus", "Grafana", "gRPC"],
+      "link": "github.com/alex/api-gateway",
+      "achievements": [
+        "Handles 100K+ requests per second with minimal latency",
+        "Gained 5K+ GitHub stars and 200+ contributors",
+        "Featured in popular tech blogs and conference talks"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "category": "Frontend",
+      "items": ["React", "Vue.js", "TypeScript", "JavaScript", "HTML5", "CSS3", "Tailwind", "Redux", "Next.js", "Webpack"]
+    },
+    {
+      "category": "Backend",
+      "items": ["Node.js", "Python", "Go", "Express", "FastAPI", "Django", "GraphQL", "REST APIs", "Microservices"]
+    },
+    {
+      "category": "Database",
+      "items": ["PostgreSQL", "MongoDB", "Redis", "MySQL", "Elasticsearch", "DynamoDB"]
+    },
+    {
+      "category": "DevOps & Cloud",
+      "items": ["AWS", "Docker", "Kubernetes", "Jenkins", "GitHub Actions", "Terraform", "Linux", "Nginx"]
+    },
+    {
+      "category": "Tools & Methods",
+      "items": ["Git", "Jira", "Agile/Scrum", "TDD", "CI/CD", "System Design", "Code Review"]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master of Science in Computer Science",
+      "institution": "Stanford University",
+      "location": "Stanford, CA",
+      "year": "2015 - 2017",
+      "gpa": "3.9/4.0",
+      "honors": [
+        "Graduate Research Assistant - Distributed Systems Lab",
+        "Published 2 papers on cloud computing optimization",
+        "Recipient of Merit-Based Scholarship"
+      ]
+    },
+    {
+      "degree": "Bachelor of Science in Software Engineering",
+      "institution": "University of California, Berkeley",
+      "location": "Berkeley, CA",
+      "year": "2011 - 2015",
+      "gpa": "3.8/4.0",
+      "honors": [
+        "Summa Cum Laude",
+        "Dean's List (All Semesters)",
+        "President of Computer Science Student Association"
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect - Professional",
+      "issuer": "Amazon Web Services",
+      "date": "2023"
+    },
+    {
+      "name": "Certified Kubernetes Administrator (CKA)",
+      "issuer": "Cloud Native Computing Foundation",
+      "date": "2022"
+    },
+    {
+      "name": "Google Cloud Professional Cloud Architect",
+      "issuer": "Google Cloud",
+      "date": "2021"
+    },
+    {
+      "name": "MongoDB Certified Developer Associate",
+      "issuer": "MongoDB University",
+      "date": "2020"
+    }
+  ],
+  "languages": [
+    {
+      "name": "English",
+      "proficiency": "Native",
+      "proficiencyPercent": 100
+    },
+    {
+      "name": "Spanish",
+      "proficiency": "Professional",
+      "proficiencyPercent": 85
+    },
+    {
+      "name": "Mandarin",
+      "proficiency": "Intermediate",
+      "proficiencyPercent": 60
+    },
+    {
+      "name": "French",
+      "proficiency": "Basic",
+      "proficiencyPercent": 40
+    }
+  ],
+  "achievements": [
+    "Led migration of monolithic application to microservices architecture, reducing infrastructure costs by $150K annually",
+    "Awarded 'Engineer of the Year' in 2022 for outstanding technical contributions and leadership",
+    "Speaker at 3 international tech conferences on scalable web architecture and cloud-native development",
+    "Open-source contributor with 50+ merged PRs to popular projects like React, Vue.js, and Node.js",
+    "Reduced technical debt by 40% through systematic refactoring and implementation of coding standards",
+    "Established engineering best practices that improved team velocity by 35% and reduced bugs by 50%"
+  ],
+  "interests": [
+    {
+      "name": "Open Source",
+      "icon": "💻"
+    },
+    {
+      "name": "Tech Blogging",
+      "icon": "✍️"
+    },
+    {
+      "name": "Hiking",
+      "icon": "🏔️"
+    },
+    {
+      "name": "Photography",
+      "icon": "📸"
+    },
+    {
+      "name": "Chess",
+      "icon": "♟️"
+    },
+    {
+      "name": "Cooking",
+      "icon": "🍳"
+    }
+  ]
+}
