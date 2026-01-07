@@ -520,6 +520,13 @@
                                               placeholder="A modern and clean resume template perfect for professionals..." required></textarea>
                                 </div>
 
+                                <div class="mb-3">
+                                    <label class="form-label">Thumbnail URL*</label>
+                                    <input type="url" class="form-control custom-input" id="thumbnail" 
+                                           placeholder="https://example.com/template-thumbnail.jpg" required>
+                                    <small class="text-muted">Enter the URL of the template preview image</small>
+                                </div>
+
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">Profession*</label>
@@ -607,6 +614,10 @@
                                             <div class="section-checkbox">
                                                 <input class="form-check-input custom-checkbox" type="checkbox" id="sec_interests">
                                                 <label class="form-check-label" for="sec_interests">Interests</label>
+                                            </div>
+                                            <div class="section-checkbox">
+                                                <input class="form-check-input custom-checkbox" type="checkbox" id="sec_references">
+                                                <label class="form-check-label" for="sec_references">References</label>
                                             </div>
                                         </div>
                                     </div>
@@ -782,6 +793,9 @@
                                 <button class="btn" onclick="updatePreview()">
                                     🔄 Refresh Preview
                                 </button>
+                                <button class="btn" onclick="exportAsJPG()">
+                                    📷 Export as JPG
+                                </button>
                                 <button class="btn" onclick="downloadTemplate()">
                                     💾 Download HTML
                                 </button>
@@ -816,6 +830,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api-service.js"></script>
 <script>
     const API_URL = 'http://localhost:5000/api/v1';
     
@@ -1111,25 +1128,83 @@
         URL.revokeObjectURL(url);
     }
 
-    // ==================== SAVE TEMPLATE ====================
-    async function saveTemplate(publish) {
-        const token = localStorage.getItem('accessToken');
+    // ==================== EXPORT AS JPG ====================
+    async function exportAsJPG() {
+        const preview = document.getElementById('templatePreview');
+        const iframe = document.getElementById('previewFrame');
         
-        if (!token) {
-            alert('❌ Please login first!');
-            window.location.href = 'login.html';
+        if (!iframe) {
+            alert('⚠️ Please refresh the preview first!');
             return;
         }
 
+        try {
+            // Show loading state
+            const originalContent = preview.innerHTML;
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'text-center p-5';
+            loadingDiv.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Generating JPG...</span>
+                </div>
+                <p class="mt-3">Generating JPG image...</p>
+            `;
+            preview.appendChild(loadingDiv);
+
+            // Wait a bit for rendering
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Get the iframe document body
+            const iframeBody = iframe.contentDocument.body;
+            
+            // Use html2canvas to capture the iframe content
+            const canvas = await html2canvas(iframeBody, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Higher quality
+                useCORS: true,
+                allowTaint: true,
+                logging: false
+            });
+
+            // Convert canvas to blob
+            canvas.toBlob(function(blob) {
+                const templateName = document.getElementById('templateName').value || 'resume-template';
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${templateName}.jpg`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                // Remove loading state
+                loadingDiv.remove();
+                
+                alert('✅ JPG exported successfully!');
+            }, 'image/jpeg', 0.95);
+
+        } catch (error) {
+            console.error('Export Error:', error);
+            alert('❌ Failed to export as JPG: ' + error.message);
+            // Remove loading state if error
+            const loadingDiv = preview.querySelector('.spinner-border')?.closest('div');
+            if (loadingDiv) loadingDiv.remove();
+        }
+    }
+
+    // ==================== SAVE TEMPLATE ====================
+    async function saveTemplate(publish) {
+        // Get form values
         const templateName = document.getElementById('templateName').value.trim();
         const displayName = document.getElementById('displayName').value.trim();
         const description = document.getElementById('description').value.trim();
+        const thumbnail = document.getElementById('thumbnail').value.trim();
         const profession = document.getElementById('profession').value;
         const subscriptionTier = document.getElementById('subscriptionTier').value;
         const htmlCode = document.getElementById('htmlCode').value.trim();
         const cssCode = document.getElementById('cssCode').value.trim();
 
-        if (!templateName || !displayName || !description || !profession || !htmlCode || !cssCode) {
+        // Validate required fields
+        if (!templateName || !displayName || !description || !thumbnail || !profession || !htmlCode || !cssCode) {
             alert('⚠️ Please fill all required fields!');
             return;
         }
@@ -1144,13 +1219,15 @@
             certifications: document.getElementById('sec_certifications').checked,
             languages: document.getElementById('sec_languages').checked,
             achievements: document.getElementById('sec_achievements').checked,
-            interests: document.getElementById('sec_interests').checked
+            interests: document.getElementById('sec_interests').checked,
+            references: document.getElementById('sec_references').checked
         };
 
         const templateData = {
             name: templateName,
             displayName: displayName,
             description: description,
+            thumbnail: thumbnail,
             profession: profession,
             subscriptionTier: subscriptionTier,
             category: document.getElementById('category').value,
@@ -1163,19 +1240,15 @@
         try {
             console.log('Saving template...', templateData);
 
-            const response = await fetch(`${API_URL}/admin/templates`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(templateData)
-            });
+            // Use apiService which automatically handles token from localStorage
+            const result = await apiService.post('/api/v1/admin/templates', templateData);
 
-            const result = await response.json();
-
-            if (result.success || response.ok) {
+            if (result.success || result.data) {
                 alert(publish ? '✅ Template published successfully!' : '✅ Template saved as draft!');
+                // Optionally redirect to templates list
+                setTimeout(() => {
+                    window.location.href = '/admin/admin-layout.html#templates';
+                }, 1000);
             } else {
                 alert('❌ Error: ' + (result.message || 'Failed to save template'));
             }
@@ -1183,15 +1256,42 @@
             console.error('Save Error:', error);
             alert('❌ Failed to save template: ' + error.message);
         }
+        
     }
 
     // ==================== INITIALIZE ====================
     document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Template Upload System Ready');
         
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            console.warn('⚠️ No access token found');
+        // Enhanced token debugging - check both token keys
+        const authToken = localStorage.getItem('authToken');
+        const accessToken = localStorage.getItem('accessToken');
+        const token = authToken || accessToken;
+        
+        console.log('🔐 Token Check:', {
+            authToken: authToken ? 'Found' : 'Not found',
+            accessToken: accessToken ? 'Found' : 'Not found',
+            usingToken: token ? 'Yes' : 'No',
+            length: token ? token.length : 0,
+            preview: token ? token.substring(0, 20) + '...' : 'null'
+        });
+        
+        console.log('💡 All localStorage keys:', Object.keys(localStorage));
+        
+        if (!token || token === 'null' || token === 'undefined') {
+            console.warn('⚠️ No valid token found in localStorage');
+            
+            // Show a warning banner
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+            alertDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alertDiv.innerHTML = `
+                <strong>⚠️ Warning:</strong> No access token detected. Please login to save templates.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+        } else {
+            console.log('✅ Access token found and ready');
         }
     });
 </script>
