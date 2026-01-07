@@ -1,11 +1,13 @@
-// Centralized Authentication & Authorization Module
-// Manages login state, role validation, and session handling
+// ============================================
+// CENTRALIZED AUTHENTICATION MANAGER
+// Single source of truth for auth state
+// Stores ONLY: accessToken + userRole
+// ============================================
 
 class AuthManager {
     constructor() {
-        this.TOKEN_KEY = 'authToken';
-        this.REFRESH_TOKEN_KEY = 'refreshToken';
-        this.USER_KEY = 'currentUser';
+        this.TOKEN_KEY = 'accessToken';
+        this.ROLE_KEY = 'userRole';
     }
 
     // ========================================
@@ -16,57 +18,33 @@ class AuthManager {
         return localStorage.getItem(this.TOKEN_KEY);
     }
 
-    getRefreshToken() {
-        return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-    }
-
-    setTokens(accessToken, refreshToken) {
-        localStorage.setItem(this.TOKEN_KEY, accessToken);
-        if (refreshToken) {
-            localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+    setToken(token) {
+        if (token) {
+            localStorage.setItem(this.TOKEN_KEY, token);
         }
     }
 
     clearAuth() {
         localStorage.removeItem(this.TOKEN_KEY);
-        localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-        localStorage.removeItem(this.USER_KEY);
-        localStorage.removeItem('accessToken'); // Legacy support
+        localStorage.removeItem(this.ROLE_KEY);
+        // Clear legacy keys if they exist
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('currentUser');
     }
 
     // ========================================
-    // USER MANAGEMENT
+    // ROLE MANAGEMENT
     // ========================================
-
-    getCurrentUser() {
-        const userStr = localStorage.getItem(this.USER_KEY);
-        if (!userStr) return null;
-        
-        try {
-            return JSON.parse(userStr);
-        } catch (e) {
-            console.error('Error parsing user data:', e);
-            return null;
-        }
-    }
-
-    setCurrentUser(userData) {
-        const user = {
-            id: userData._id || userData.id,
-            name: userData.fullName || userData.name,
-            email: userData.email,
-            phone: userData.phone,
-            role: userData.role || 'user',
-            plan: userData.currentPlan || userData.plan || 'Free',
-            profilePicture: userData.profilePicture,
-            isVerified: userData.isVerified
-        };
-        localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    }
 
     getUserRole() {
-        const user = this.getCurrentUser();
-        return user ? user.role : null;
+        return localStorage.getItem(this.ROLE_KEY);
+    }
+
+    setUserRole(role) {
+        if (role) {
+            localStorage.setItem(this.ROLE_KEY, role);
+        }
     }
 
     // ========================================
@@ -120,13 +98,11 @@ class AuthManager {
     // ========================================
 
     isUser() {
-        const role = this.getUserRole();
-        return role === 'user';
+        return this.getUserRole() === 'user';
     }
 
     isAdmin() {
-        const role = this.getUserRole();
-        return role === 'admin';
+        return this.getUserRole() === 'admin';
     }
 
     // ========================================
@@ -146,8 +122,12 @@ class AuthManager {
                 
                 if (!confirmed) return;
             } else {
-                // Fallback if AlertUtil not loaded
                 if (!confirm('Are you sure you want to logout?')) return;
+            }
+
+            // Call API logout if available
+            if (window.apiHandler) {
+                await apiHandler.logout();
             }
 
             // Clear auth data
@@ -172,14 +152,33 @@ class AuthManager {
     // ========================================
 
     saveAuthData(responseData) {
-        if (responseData.accessToken) {
-            this.setTokens(responseData.accessToken, responseData.refreshToken);
+        // Extract token
+        const token = responseData.accessToken || responseData.token;
+        if (token) {
+            this.setToken(token);
         }
-        if (responseData.user) {
-            this.setCurrentUser(responseData.user);
+
+        // Extract role from response or decode from token
+        let role = responseData.role || responseData.user?.role;
+        
+        if (!role && token) {
+            // Try to extract role from token
+            try {
+                const payload = this.decodeJWT(token);
+                role = payload.role || payload.user?.role || 'user';
+            } catch (e) {
+                role = 'user'; // Default to user
+            }
         }
+
+        if (role) {
+            this.setUserRole(role);
+        }
+
+        console.log('✅ Auth data saved:', { hasToken: !!token, role });
     }
 }
+
 
 // Create singleton instance
 const authManager = new AuthManager();

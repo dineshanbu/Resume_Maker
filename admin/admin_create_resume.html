@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Upload Resume Template</title>
+    
+    <!-- BLOCKING ADMIN GUARD - Must be first -->
+    <script src="/assets/js/admin-guard.js"></script>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         * {
@@ -831,8 +835,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Centralized Security & API - CORRECT ORDER -->
 <script src="/assets/js/config.js"></script>
-<script src="/assets/js/api-service.js"></script>
+<script src="/assets/js/alerts.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
 <script>
     const API_URL = 'http://localhost:5000/api/v1';
     
@@ -1240,21 +1249,21 @@
         try {
             console.log('Saving template...', templateData);
 
-            // Use apiService which automatically handles token from localStorage
-            const result = await apiService.post('/api/v1/admin/templates', templateData);
+            // Use apiHandler which automatically handles token from localStorage
+            const result = await apiHandler.post('/admin/templates', templateData);
 
             if (result.success || result.data) {
-                alert(publish ? '✅ Template published successfully!' : '✅ Template saved as draft!');
+                await AlertUtil.showSuccess(publish ? 'Template published successfully!' : 'Template saved as draft!');
                 // Optionally redirect to templates list
                 setTimeout(() => {
                     window.location.href = '/admin/admin-layout.html#templates';
                 }, 1000);
             } else {
-                alert('❌ Error: ' + (result.message || 'Failed to save template'));
+                await AlertUtil.showError(result.message || 'Failed to save template');
             }
         } catch (error) {
             console.error('Save Error:', error);
-            alert('❌ Failed to save template: ' + error.message);
+            await AlertUtil.showError('Failed to save template: ' + error.message);
         }
         
     }
@@ -1263,33 +1272,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Template Upload System Ready');
         
-        // Enhanced token debugging - check both token keys
-        const authToken = localStorage.getItem('authToken');
-        const accessToken = localStorage.getItem('accessToken');
-        const token = authToken || accessToken;
-        
-        console.log('🔐 Token Check:', {
-            authToken: authToken ? 'Found' : 'Not found',
-            accessToken: accessToken ? 'Found' : 'Not found',
-            usingToken: token ? 'Yes' : 'No',
-            length: token ? token.length : 0,
-            preview: token ? token.substring(0, 20) + '...' : 'null'
-        });
-        
-        console.log('💡 All localStorage keys:', Object.keys(localStorage));
+        // Check token
+        const token = localStorage.getItem('accessToken');
         
         if (!token || token === 'null' || token === 'undefined') {
-            console.warn('⚠️ No valid token found in localStorage');
-            
-            // Show a warning banner
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-warning alert-dismissible fade show';
-            alertDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
-            alertDiv.innerHTML = `
-                <strong>⚠️ Warning:</strong> No access token detected. Please login to save templates.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(alertDiv);
+            console.warn('⚠️ No valid token found');
+            AlertUtil.showWarning('Please login to save templates.', 'Authentication Required').then(() => {
+                window.location.href = '/login.html';
+            });
         } else {
             console.log('✅ Access token found and ready');
         }
