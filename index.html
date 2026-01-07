@@ -312,7 +312,7 @@
                                 <i class="bi bi-star-fill text-warning"></i>
                                 <small class="text-muted ms-1 fw-semibold">4.9</small>
                             </div>
-                            <a href="resume-builder.html" class="btn btn-primary w-100 btn-sm mt-auto">
+                            <a href="#" onclick="handleTemplateSelection('resume-builder.html'); return false;" class="btn btn-primary w-100 btn-sm mt-auto" data-testid="use-template-professional-btn">
                                 <i class="bi bi-check-circle me-1"></i>Use Template
                             </a>
                         </div>
@@ -345,7 +345,7 @@
                                 <i class="bi bi-star-half text-warning"></i>
                                 <small class="text-muted ms-1 fw-semibold">4.7</small>
                             </div>
-                            <a href="resume-builder.html" class="btn btn-primary w-100 btn-sm mt-auto">
+                            <a href="#" onclick="handleTemplateSelection('resume-builder.html'); return false;" class="btn btn-primary w-100 btn-sm mt-auto" data-testid="use-template-modern-btn">
                                 <i class="bi bi-check-circle me-1"></i>Use Template
                             </a>
                         </div>
@@ -378,7 +378,7 @@
                                 <i class="bi bi-star-fill text-warning"></i>
                                 <small class="text-muted ms-1 fw-semibold">4.8</small>
                             </div>
-                            <a href="resume-builder.html" class="btn btn-primary w-100 btn-sm mt-auto">
+                            <a href="#" onclick="handleTemplateSelection('resume-builder.html'); return false;" class="btn btn-primary w-100 btn-sm mt-auto" data-testid="use-template-creative-btn">
                                 <i class="bi bi-check-circle me-1"></i>Use Template
                             </a>
                         </div>
@@ -411,7 +411,7 @@
                                 <i class="bi bi-star-fill text-warning"></i>
                                 <small class="text-muted ms-1 fw-semibold">5.0</small>
                             </div>
-                            <a href="resume-builder.html" class="btn btn-primary w-100 btn-sm mt-auto">
+                            <a href="#" onclick="handleTemplateSelection('resume-builder.html'); return false;" class="btn btn-primary w-100 btn-sm mt-auto" data-testid="use-template-executive-btn">
                                 <i class="bi bi-check-circle me-1"></i>Use Template
                             </a>
                         </div>
@@ -748,7 +748,26 @@
     <!-- AOS Animation Library -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Auth Services -->
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/api-service.js"></script>
+    <script src="./assets/js/security.js"></script>
+    <script src="./assets/js/auth-updated.js"></script>
     <script>
+        // Handle template selection with authentication check
+        function handleTemplateSelection(targetPage) {
+            // Check if user is logged in
+            if (typeof authService !== 'undefined' && authService.isLoggedIn()) {
+                // User is logged in, proceed to template page
+                window.location.href = targetPage;
+            } else {
+                // User is not logged in, redirect to login
+                if (confirm('Please login to use this template. Would you like to login now?')) {
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+        
         AOS.init({
             duration: 600,
             once: true,

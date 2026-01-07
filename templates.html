@@ -138,6 +138,10 @@
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/api-service.js"></script>
+    <script src="./assets/js/security.js"></script>
+    <script src="./assets/js/auth-updated.js"></script>
     <script src="./assets/js/auth.js"></script>
     <script>
         const templates = [
@@ -254,7 +258,13 @@
         }
 
         function selectTemplate(templateName, isPremium) {
-            const user = getCurrentUser();
+            // Check if user is logged in using authService (if available)
+            let user = null;
+            if (typeof authService !== 'undefined' && authService.isLoggedIn()) {
+                user = authService.getCurrentUser();
+            } else if (typeof getCurrentUser === 'function') {
+                user = getCurrentUser();
+            }
             
             if (isPremium && (!user || user.plan !== 'premium')) {
                 if (confirm(`"${templateName}" is a premium template. Would you like to upgrade to Premium?`)) {
