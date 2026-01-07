@@ -117,15 +117,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Centralized Security & API -->
+    <script src="./assets/js/alerts.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/guard.js"></script>
     <script>
         AOS.init({ duration: 500, once: true });
     </script>
-    
-    <!-- Load dependencies in correct order -->
-    <script src="./assets/js/config.js"></script>
-    <script src="./assets/js/api-service.js"></script>
-    <script src="./assets/js/security.js"></script>
-    <script src="./assets/js/auth-updated.js"></script>
     
     <script>
         function togglePasswordVisibility() {
@@ -248,37 +249,30 @@
             loginBtnLoader.classList.remove('d-none');
             
             try {
-                const result = await authService.login({ email, password });
+                // Use centralized API handler
+                const result = await apiHandler.login(email, password);
                 
-                if (result.success) {
-                    showAlert('Login successful! Redirecting...', 'success');
-                    
-                    if (result.data?.accessToken) {
-                        localStorage.setItem('accessToken', result.data.accessToken);
-                    }
-                    if (result.data?.refreshToken) {
-                        localStorage.setItem('refreshToken', result.data.refreshToken);
-                    }
+                if (result.success && result.data) {
+                    // Save auth data using centralized auth manager
+                    authManager.saveAuthData(result.data);
                     
                     if (remember) {
                         localStorage.setItem('rememberMe', 'true');
                     }
                     
-                    setTimeout(() => {
-                        const role = result.data?.user?.role || 'user';
-                        if (role === 'admin') {
-                            window.location.href = './admin/admin-dashboard.html';
-                        } else {
-                            window.location.href = 'user-dashboard.html';
-                        }
-                    }, 1000);
-                } else {
-                    if (result.statusCode === 422 && result.errors && result.errors.length > 0) {
-                        const firstError = result.errors[0];
-                        showFieldError(firstError.field, firstError.message);
+                    // Show success with Swal
+                    await AlertUtil.showToast('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect based on role
+                    const role = result.data?.user?.role || 'user';
+                    if (role === 'admin') {
+                        window.location.href = '/admin/admin-layout.html';
                     } else {
-                        showAlert(result.message || 'Invalid email or password', 'danger');
+                        window.location.href = '/user-dashboard.html';
                     }
+                } else {
+                    // Show error with Swal
+                    await AlertUtil.showError(result.message || 'Invalid email or password');
                     
                     loginBtn.disabled = false;
                     loginBtnText.classList.remove('d-none');
@@ -287,12 +281,8 @@
             } catch (error) {
                 console.error('Login error:', error);
                 
-                if (error.statusCode === 422 && error.errors && error.errors.length > 0) {
-                    const firstError = error.errors[0];
-                    showFieldError(firstError.field, firstError.message);
-                } else {
-                    showAlert(error.message || 'Login failed. Please try again.', 'danger');
-                }
+                // Show error with Swal
+                await AlertUtil.showError(error.message || 'Login failed. Please try again.');
                 
                 loginBtn.disabled = false;
                 loginBtnText.classList.remove('d-none');
@@ -301,7 +291,7 @@
         });
 
         document.querySelector('[data-testid="google-signin-btn"]').addEventListener('click', function() {
-            showAlert('Google Sign-in is coming soon! Please use email login for now.', 'info');
+            AlertUtil.showInfo('Google Sign-in is coming soon! Please use email login for now.');
         });
     </script>
 </body>

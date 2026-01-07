@@ -8,9 +8,9 @@ class AdminPanel {
     }
 
     init() {
-        // Check admin authentication
-        if (!authService.requireAdmin()) {
-            return;
+        // Check admin authentication using centralized guard
+        if (!routeGuard.requireAdmin()) {
+            return; // Guard will handle redirect
         }
 
         // Load admin user info
@@ -27,7 +27,7 @@ class AdminPanel {
     }
 
     loadAdminInfo() {
-        const user = authService.getCurrentUser();
+        const user = authManager.getCurrentUser();
         if (user) {
             document.getElementById('adminName').textContent = user.name || 'Admin User';
             const firstLetter = (user.name || 'Admin').charAt(0).toUpperCase();
@@ -231,12 +231,10 @@ class AdminPanel {
     }
 }
 
-// Logout handler
-function handleLogout(event) {
+// Logout handler with Swal confirmation
+async function handleLogout(event) {
     event.preventDefault();
-    if (confirm('Are you sure you want to logout?')) {
-        authService.logout();
-    }
+    await authManager.logout();
 }
 
 // Initialize admin panel when DOM is ready

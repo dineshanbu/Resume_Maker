@@ -135,15 +135,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Centralized Security & API -->
+    <script src="./assets/js/alerts.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/guard.js"></script>
     <script>
         AOS.init({ duration: 500, once: true });
     </script>
-    
-    <!-- Load dependencies in correct order -->
-    <script src="./assets/js/config.js"></script>
-    <script src="./assets/js/api-service.js"></script>
-    <script src="./assets/js/security.js"></script>
-    <script src="./assets/js/auth-updated.js"></script>
     
     <script>
         function togglePasswordVisibility(inputId, iconId) {
@@ -314,30 +315,26 @@
             registerBtnLoader.classList.remove('d-none');
             
             try {
-                const result = await authService.signup({
-                    fullName,
-                    email,
-                    password
-                });
+                // Use centralized API handler
+                const result = await apiHandler.signup({ fullName, email, password });
                 
-                if (result.success) {
-                    showAlert('Account created successfully! Redirecting...', 'success');
+                if (result.success && result.data) {
+                    // Save auth data using centralized auth manager
+                    authManager.saveAuthData(result.data);
                     
-                    setTimeout(() => {
-                        const role = result.data?.user?.role || 'user';
-                        if (role === 'admin') {
-                            window.location.href = './admin/admin-dashboard.html';
-                        } else {
-                            window.location.href = 'user-dashboard.html';
-                        }
-                    }, 1500);
-                } else {
-                    if (result.statusCode === 422 && result.errors && result.errors.length > 0) {
-                        const firstError = result.errors[0];
-                        showFieldError(firstError.field, firstError.message);
+                    // Show success with Swal
+                    await AlertUtil.showToast('Account created successfully! Redirecting...', 'success');
+                    
+                    // Redirect based on role
+                    const role = result.data?.user?.role || 'user';
+                    if (role === 'admin') {
+                        window.location.href = '/admin/admin-layout.html';
                     } else {
-                        showAlert(result.message || 'Registration failed. Please try again.', 'danger');
+                        window.location.href = '/user-dashboard.html';
                     }
+                } else {
+                    // Show error with Swal
+                    await AlertUtil.showError(result.message || 'Registration failed. Please try again.');
                     
                     registerBtn.disabled = false;
                     registerBtnText.classList.remove('d-none');
@@ -346,12 +343,8 @@
             } catch (error) {
                 console.error('Registration error:', error);
                 
-                if (error.statusCode === 422 && error.errors && error.errors.length > 0) {
-                    const firstError = error.errors[0];
-                    showFieldError(firstError.field, firstError.message);
-                } else {
-                    showAlert(error.message || 'Registration failed. Please try again.', 'danger');
-                }
+                // Show error with Swal
+                await AlertUtil.showError(error.message || 'Registration failed. Please try again.');
                 
                 registerBtn.disabled = false;
                 registerBtnText.classList.remove('d-none');
@@ -360,7 +353,7 @@
         });
 
         document.querySelector('[data-testid="google-signup-btn"]').addEventListener('click', function() {
-            showAlert('Google Sign-up is coming soon! Please use email registration for now.', 'info');
+            AlertUtil.showInfo('Google Sign-up is coming soon! Please use email registration for now.');
         });
     </script>
 </body>

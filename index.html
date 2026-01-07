@@ -748,21 +748,30 @@
     <!-- AOS Animation Library -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <!-- Auth Services -->
-    <script src="./assets/js/config.js"></script>
-    <script src="./assets/js/api-service.js"></script>
-    <script src="./assets/js/security.js"></script>
-    <script src="./assets/js/auth-updated.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Centralized Security & API -->
+    <script src="./assets/js/alerts.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/guard.js"></script>
     <script>
         // Handle template selection with authentication check
-        function handleTemplateSelection(targetPage) {
+        async function handleTemplateSelection(targetPage) {
             // Check if user is logged in
-            if (typeof authService !== 'undefined' && authService.isLoggedIn()) {
+            if (authManager.isLoggedIn()) {
                 // User is logged in, proceed to template page
                 window.location.href = targetPage;
             } else {
-                // User is not logged in, redirect to login
-                if (confirm('Please login to use this template. Would you like to login now?')) {
+                // User is not logged in, show Swal confirmation
+                const confirmed = await AlertUtil.showConfirm(
+                    'Please login to use this template.',
+                    'Login Required',
+                    'Login Now',
+                    'Cancel'
+                );
+                
+                if (confirmed) {
                     window.location.href = 'login.html';
                 }
             }

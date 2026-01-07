@@ -1055,27 +1055,25 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./assets/js/config.js"></script>
-    <script src="./assets/js/api-service.js"></script>
-    <script src="./assets/js/security.js"></script>
-    <script src="./assets/js/auth-updated.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Centralized Security & API -->
+    <script src="./assets/js/alerts.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/guard.js"></script>
     <script>
         // Require user authentication
         document.addEventListener('DOMContentLoaded', function() {
-            if (!authService.isLoggedIn()) {
-                alert('Please login to create a resume');
-                window.location.href = 'login.html';
-                return;
+            // Use centralized route guard
+            if (!routeGuard.requireUser()) {
+                return; // Guard will handle redirect
             }
 
-            const user = authService.getCurrentUser();
-            
-            // Redirect admin to admin dashboard
-            if (user && user.role === 'admin') {
-                window.location.href = './admin/admin-dashboard.html';
+            const user = authManager.getCurrentUser();
                 return;
             }
-        });
+        );
 
         // Templates Data
         const templates = {
