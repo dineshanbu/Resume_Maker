@@ -10,6 +10,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --secondary-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,33 +27,48 @@
 
         body {
             font-family: 'Rubik', sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #2d3748;
         }
 
         /* Top Header */
         .top-header {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.25rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+        }
+
+        .logo-section i {
+            font-size: 2rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .logo-section h4 {
             margin: 0;
             font-weight: 700;
             font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .header-right {
@@ -55,32 +79,43 @@
 
         .notification-btn {
             position: relative;
-            background: none;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
             border: none;
-            font-size: 1.3rem;
-            color: #666;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            color: #495057;
             cursor: pointer;
-            transition: color 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .notification-btn:hover {
-            color: #0d6efd;
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
         .notification-badge {
             position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #dc3545;
+            top: -2px;
+            right: -2px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
             color: white;
             border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.7rem;
+            width: 20px;
+            height: 20px;
+            font-size: 0.65rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
+            font-weight: 700;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
         }
 
         .admin-profile {
@@ -89,162 +124,227 @@
             gap: 0.75rem;
             cursor: pointer;
             padding: 0.5rem 1rem;
-            border-radius: 8px;
-            transition: background 0.3s;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
 
         .admin-profile:hover {
-            background: #f8f9fa;
+            background: var(--primary-gradient);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .admin-profile:hover .admin-info h6,
+        .admin-profile:hover .admin-info p,
+        .admin-profile:hover i {
+            color: white;
         }
 
         .admin-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 700;
             font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .admin-info h6 {
             margin: 0;
             font-size: 0.9rem;
             font-weight: 600;
+            color: #2d3748;
+            transition: color 0.3s;
         }
 
         .admin-info p {
             margin: 0;
             font-size: 0.75rem;
-            color: #666;
+            color: #718096;
+            transition: color 0.3s;
+        }
+
+        .admin-profile i.bi-chevron-down {
+            color: #718096;
+            transition: color 0.3s;
         }
 
         /* Main Content */
         .main-content {
-            padding: 2rem;
+            padding: 2.5rem;
             max-width: 1400px;
             margin: 0 auto;
         }
 
         .page-header {
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         .page-header h1 {
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
+            color: #1a202c;
+            letter-spacing: -0.5px;
         }
 
         .page-header p {
-            color: #666;
+            color: #718096;
             margin: 0;
+            font-size: 1rem;
         }
 
         /* Stats Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 2.5rem;
         }
 
         .stat-card {
             background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
             display: flex;
             align-items: center;
-            gap: 1rem;
-            transition: transform 0.3s, box-shadow 0.3s;
+            gap: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
         }
 
         .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.75rem;
+            font-size: 2rem;
             flex-shrink: 0;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
 
         .stat-icon.primary {
-            background: rgba(13, 110, 253, 0.1);
-            color: #0d6efd;
+            background: var(--primary-gradient);
+            color: white;
         }
 
         .stat-icon.success {
-            background: rgba(25, 135, 84, 0.1);
-            color: #198754;
+            background: var(--success-gradient);
+            color: white;
         }
 
         .stat-icon.warning {
-            background: rgba(255, 193, 7, 0.1);
-            color: #ffc107;
+            background: var(--warning-gradient);
+            color: white;
         }
 
         .stat-icon.info {
-            background: rgba(13, 202, 240, 0.1);
-            color: #0dcaf0;
+            background: var(--info-gradient);
+            color: white;
+        }
+
+        .stat-icon.secondary {
+            background: var(--secondary-gradient);
+            color: #667eea;
+        }
+
+        .stat-icon.danger {
+            background: var(--danger-gradient);
+            color: white;
         }
 
         .stat-details h3 {
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
             margin: 0;
-            color: #333;
+            color: #1a202c;
+            line-height: 1;
         }
 
         .stat-details p {
-            margin: 0;
-            color: #666;
-            font-size: 0.9rem;
+            margin: 0.5rem 0 0 0;
+            color: #718096;
+            font-size: 0.95rem;
             font-weight: 500;
         }
 
         /* Section Cards */
         .section-card {
             background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
             margin-bottom: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .section-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
 
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f3f5;
         }
 
         .section-header h3 {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 700;
             margin: 0;
+            color: #1a202c;
         }
 
         .section-header a {
-            color: #0d6efd;
+            color: #667eea;
             text-decoration: none;
             font-weight: 600;
             font-size: 0.9rem;
-            transition: opacity 0.3s;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
         }
 
         .section-header a:hover {
-            opacity: 0.8;
+            background: rgba(102, 126, 234, 0.1);
+            color: #764ba2;
         }
 
         /* Quick Actions Grid */
@@ -522,6 +622,34 @@
             margin-right: 0.5rem;
         }
 
+        /* Skeleton Loading */
+        .skeleton-box {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Progress Bars */
+        .progress {
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .top-header {
@@ -589,45 +717,7 @@
 
         <!-- Stats Grid -->
         <div class="stats-grid" data-testid="stats-grid">
-            <div class="stat-card" data-testid="stat-total-users">
-                <div class="stat-icon primary">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <div class="stat-details">
-                    <h3>1,284</h3>
-                    <p>Total Users</p>
-                </div>
-            </div>
-
-            <div class="stat-card" data-testid="stat-total-resumes">
-                <div class="stat-icon success">
-                    <i class="bi bi-file-earmark-text-fill"></i>
-                </div>
-                <div class="stat-details">
-                    <h3>3,567</h3>
-                    <p>Total Resumes</p>
-                </div>
-            </div>
-
-            <div class="stat-card" data-testid="stat-total-templates">
-                <div class="stat-icon warning">
-                    <i class="bi bi-layout-text-sidebar-reverse"></i>
-                </div>
-                <div class="stat-details">
-                    <h3>24</h3>
-                    <p>Total Templates</p>
-                </div>
-            </div>
-
-            <div class="stat-card" data-testid="stat-active-subscriptions">
-                <div class="stat-icon info">
-                    <i class="bi bi-star-fill"></i>
-                </div>
-                <div class="stat-details">
-                    <h3>187</h3>
-                    <p>Active Subscriptions</p>
-                </div>
-            </div>
+            <!-- Stats will be populated by JavaScript from API -->
         </div>
 
         <!-- Quick Actions -->
@@ -636,21 +726,17 @@
                 <h3>Quick Actions</h3>
             </div>
             <div class="actions-grid">
-                <a href="admin/create_template.html" class="action-btn" data-testid="create-template-btn">
+                <a href="/admin/create_template.html" class="action-btn" data-testid="create-template-btn">
                     <i class="bi bi-plus-circle-fill"></i>
-                    <span>Create Resume Template</span>
+                    <span>Create New Resume Template</span>
                 </a>
-                <button class="action-btn" onclick="alert('Feature coming soon!')" data-testid="manage-templates-btn">
+                <button class="action-btn" style="opacity: 0.6; cursor: not-allowed;" disabled data-testid="manage-templates-btn">
                     <i class="bi bi-folder-fill"></i>
                     <span>Manage Templates</span>
                 </button>
-                <button class="action-btn" onclick="alert('Feature coming soon!')" data-testid="view-users-btn">
-                    <i class="bi bi-people-fill"></i>
-                    <span>View Users</span>
-                </button>
-                <button class="action-btn" onclick="alert('Feature coming soon!')" data-testid="view-payments-btn">
-                    <i class="bi bi-credit-card-fill"></i>
-                    <span>View Payments</span>
+                <button class="action-btn" style="opacity: 0.6; cursor: not-allowed;" disabled data-testid="view-analytics-btn">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>View Analytics</span>
                 </button>
             </div>
         </div>
@@ -659,74 +745,20 @@
         <div class="section-card" data-testid="template-management-section">
             <div class="section-header">
                 <h3>Recent Templates</h3>
-                <a href="#" onclick="alert('Feature coming soon!'); return false;">View All</a>
+                <a href="#" onclick="alert('Full template management coming in next phase!'); return false;">View All</a>
             </div>
-            <div class="template-list">
-                <div class="template-item" data-testid="template-item-1">
-                    <div class="template-info">
-                        <div class="template-icon">
-                            <i class="bi bi-file-earmark-text"></i>
-                        </div>
-                        <div class="template-details">
-                            <h5>Professional Resume</h5>
-                            <p>Created 2 days ago</p>
-                        </div>
-                        <span class="template-badge badge-premium">Premium</span>
-                        <span class="status-badge status-active">Active</span>
-                    </div>
-                    <div class="template-actions">
-                        <button class="btn-icon btn-edit" title="Edit" onclick="window.location.href='admin/create_template.html'" data-testid="edit-template-1">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn-icon btn-preview" title="Preview" onclick="alert('Preview feature coming soon!')" data-testid="preview-template-1">
-                            <i class="bi bi-eye-fill"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="template-list" data-testid="template-list">
+                <!-- Templates will be populated by JavaScript from API -->
+            </div>
+        </div>
 
-                <div class="template-item" data-testid="template-item-2">
-                    <div class="template-info">
-                        <div class="template-icon">
-                            <i class="bi bi-file-earmark-text"></i>
-                        </div>
-                        <div class="template-details">
-                            <h5>Modern Creative</h5>
-                            <p>Created 5 days ago</p>
-                        </div>
-                        <span class="template-badge badge-modern">Modern</span>
-                        <span class="status-badge status-active">Active</span>
-                    </div>
-                    <div class="template-actions">
-                        <button class="btn-icon btn-edit" title="Edit" onclick="window.location.href='admin/create_template.html'" data-testid="edit-template-2">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn-icon btn-preview" title="Preview" onclick="alert('Preview feature coming soon!')" data-testid="preview-template-2">
-                            <i class="bi bi-eye-fill"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="template-item" data-testid="template-item-3">
-                    <div class="template-info">
-                        <div class="template-icon">
-                            <i class="bi bi-file-earmark-text"></i>
-                        </div>
-                        <div class="template-details">
-                            <h5>Classic Standard</h5>
-                            <p>Created 1 week ago</p>
-                        </div>
-                        <span class="template-badge badge-basic">Basic</span>
-                        <span class="status-badge status-inactive">Inactive</span>
-                    </div>
-                    <div class="template-actions">
-                        <button class="btn-icon btn-edit" title="Edit" onclick="window.location.href='admin/create_template.html'" data-testid="edit-template-3">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn-icon btn-preview" title="Preview" onclick="alert('Preview feature coming soon!')" data-testid="preview-template-3">
-                            <i class="bi bi-eye-fill"></i>
-                        </button>
-                    </div>
-                </div>
+        <!-- Template Statistics Overview -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3>Template Statistics Overview</h3>
+            </div>
+            <div data-testid="template-statistics">
+                <!-- Statistics will be populated by JavaScript from API -->
             </div>
         </div>
 
@@ -798,10 +830,11 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./assets/js/config.js"></script>
-    <script src="./assets/js/api-service.js"></script>
-    <script src="./assets/js/security.js"></script>
-    <script src="./assets/js/auth-updated.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api-service.js"></script>
+    <script src="/assets/js/security.js"></script>
+    <script src="/assets/js/auth-updated.js"></script>
+    <script src="/assets/js/admin-dashboard.js"></script>
     
     <script>
         // Require admin authentication
