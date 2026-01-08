@@ -1262,7 +1262,7 @@
             console.log('Saving template...', templateData);
 
             // Use apiService which automatically handles token from localStorage
-            const result = await apiService.post('/admin/templates', templateData);
+            const result = await apiService.post('/api/v1/admin/templates', templateData);
 
             if (result.success || result.data) {
                 await AlertUtil.showSuccess(publish ? 'Template published successfully!' : 'Template saved as draft!');

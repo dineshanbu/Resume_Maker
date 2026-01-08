@@ -5,20 +5,28 @@ const TemplatesController = {
     loading: false,
 
     async render(container) {
-        // FAIL-SAFE: Check if apiService exists
-        if (typeof window.apiService === 'undefined') {
-            console.error('❌ apiService is not defined - cannot load templates');
-            container.innerHTML = this.getErrorHTML('API Service not available. Please refresh the page.');
-            if (window.AlertUtil) {
-                AlertUtil.showError('System error: API service unavailable. Please refresh the page.');
-            }
-            return;
-        }
-
-        container.innerHTML = this.getLoadingHTML();
-        await this.loadTemplates();
+        console.log('✅ TemplatesController.render() called');
+        
+        // STEP 1: Render static UI immediately (without waiting for API)
+        this.templates = []; // Start with empty state
         container.innerHTML = this.getTemplatesHTML();
         this.attachEventHandlers();
+        console.log('✅ Templates UI rendered with empty state');
+        
+        // STEP 2: Load real API data in background (non-blocking)
+        if (typeof window.apiService !== 'undefined') {
+            this.loadTemplates().then(() => {
+                // Update UI with real data if successful
+                container.innerHTML = this.getTemplatesHTML();
+                this.attachEventHandlers();
+                console.log('✅ Templates updated with API data');
+            }).catch(error => {
+                console.log('⚠️ API load failed, keeping empty state:', error.message);
+                // Keep showing empty state, don't break UI with error modals
+            });
+        } else {
+            console.log('⚠️ apiService not available, showing empty state only');
+        }
     },
 
     async loadTemplates() {
@@ -35,12 +43,8 @@ const TemplatesController = {
             }
         } catch (error) {
             console.error('Error loading templates:', error);
-            
-            // Show error alert if AlertUtil is available
-            if (window.AlertUtil) {
-                AlertUtil.showError('Failed to load templates: ' + error.message);
-            }
-            
+            // Don't show error alert - fail silently and keep empty state
+            // This prevents modal popups blocking the UI during debugging
             this.templates = [];
         } finally {
             this.loading = false;

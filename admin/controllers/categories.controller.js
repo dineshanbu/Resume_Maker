@@ -4,19 +4,26 @@ const CategoriesController = {
     categories: [],
 
     async render(container) {
-        // FAIL-SAFE: Check if apiService exists
-        if (typeof window.apiService === 'undefined') {
-            console.error('❌ apiService is not defined - cannot load categories');
-            container.innerHTML = this.getErrorHTML('API Service not available. Please refresh the page.');
-            if (window.AlertUtil) {
-                AlertUtil.showError('System error: API service unavailable. Please refresh the page.');
-            }
-            return;
-        }
-
-        container.innerHTML = this.getLoadingHTML();
-        await this.loadCategories();
+        console.log('✅ CategoriesController.render() called');
+        
+        // STEP 1: Render static UI immediately (without waiting for API)
+        this.categories = []; // Start with empty state
         container.innerHTML = this.getCategoriesHTML();
+        console.log('✅ Categories UI rendered with empty state');
+        
+        // STEP 2: Load real API data in background (non-blocking)
+        if (typeof window.apiService !== 'undefined') {
+            this.loadCategories().then(() => {
+                // Update UI with real data if successful
+                container.innerHTML = this.getCategoriesHTML();
+                console.log('✅ Categories updated with API data');
+            }).catch(error => {
+                console.log('⚠️ API load failed, keeping empty state:', error.message);
+                // Keep showing empty state, don't break UI with error modals
+            });
+        } else {
+            console.log('⚠️ apiService not available, showing empty state only');
+        }
     },
 
     async loadCategories() {
@@ -35,12 +42,8 @@ const CategoriesController = {
             this.categories = this.groupTemplates(templates);
         } catch (error) {
             console.error('Error loading categories:', error);
-            
-            // Show error alert if AlertUtil is available
-            if (window.AlertUtil) {
-                AlertUtil.showError('Failed to load categories: ' + error.message);
-            }
-            
+            // Don't show error alert - fail silently and keep empty state
+            // This prevents modal popups blocking the UI during debugging
             this.categories = [];
         }
     },

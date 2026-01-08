@@ -26,6 +26,7 @@ class AdminPanel {
         if (!routeGuard.requireAdmin()) {
             return; // Guard will handle redirect
         }
+        console.log('\u2705 Admin guard check passed');
 
         // Load admin user info
         this.loadAdminInfo();
