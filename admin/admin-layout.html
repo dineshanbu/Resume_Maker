@@ -225,18 +225,29 @@
         </main>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts - CRITICAL LOAD ORDER -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Centralized Security & API - CORRECT ORDER -->
+    
+    <!-- STEP 1: Configuration -->
     <script src="/assets/js/config.js"></script>
+    
+    <!-- STEP 2: Global Utilities (Alerts) -->
     <script src="/assets/js/alerts.js"></script>
+    
+    <!-- STEP 3: Authentication Manager -->
     <script src="/assets/js/auth.js"></script>
+    
+    <!-- STEP 4: API Service (MUST load before controllers) -->
     <script src="/assets/js/api.js"></script>
+    
+    <!-- STEP 5: Controllers (depend on apiService) -->
     <script src="/admin/controllers/dashboard.controller.js"></script>
     <script src="/admin/controllers/templates.controller.js"></script>
     <script src="/admin/controllers/categories.controller.js"></script>
+    
+    <!-- STEP 6: Admin Router (initializes everything) -->
     <script src="/admin/admin.js"></script>
 </body>
 </html>

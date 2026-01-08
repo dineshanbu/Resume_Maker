@@ -8,6 +8,20 @@ class AdminPanel {
     }
 
     init() {
+        // CRITICAL: Verify apiService is available
+        if (typeof window.apiService === 'undefined') {
+            console.error('\u274c FATAL: apiService not available in admin.js');
+            if (window.AlertUtil) {
+                AlertUtil.showError('System initialization failed. Please refresh the page.');
+            } else {
+                // Fallback only if AlertUtil also unavailable (should never happen)
+                document.body.innerHTML = '<div style="padding: 50px; text-align: center;"><h1>System Error</h1><p>Please refresh the page</p></div>';
+            }
+            return;
+        }
+
+        console.log('\u2705 apiService verified in AdminPanel initialization');
+
         // Check admin authentication using centralized guard
         if (!routeGuard.requireAdmin()) {
             return; // Guard will handle redirect

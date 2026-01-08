@@ -248,19 +248,17 @@ const TemplatesController = {
         const template = this.templates.find(t => (t._id || t.id) === templateId);
         if (!template) return;
 
-        // Use AlertUtil if available, otherwise fallback to alert
+        // Use AlertUtil (should always be available)
         if (window.AlertUtil) {
             AlertUtil.showInfo(
                 `Category: ${template.category}\nProfession: ${template.profession}\nTier: ${template.subscriptionTier}\nStatus: ${template.isActive ? 'Active' : 'Inactive'}`,
                 template.displayName || template.name
             );
-        } else {
-            alert(`Template: ${template.displayName || template.name}\n\nCategory: ${template.category}\nProfession: ${template.profession}\nTier: ${template.subscriptionTier}\nStatus: ${template.isActive ? 'Active' : 'Inactive'}`);
         }
     },
 
     async toggleStatus(templateId, newStatus) {
-        // Use AlertUtil for confirmation if available
+        // Use AlertUtil for confirmation
         let confirmed = false;
         if (window.AlertUtil) {
             confirmed = await AlertUtil.showConfirm(
@@ -269,8 +267,6 @@ const TemplatesController = {
                 'Yes',
                 'No'
             );
-        } else {
-            confirmed = confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this template?`);
         }
 
         if (!confirmed) return;
@@ -284,8 +280,6 @@ const TemplatesController = {
                 // Show success with AlertUtil
                 if (window.AlertUtil) {
                     await AlertUtil.showSuccess('Template status updated successfully!');
-                } else {
-                    alert('Template status updated successfully!');
                 }
                 
                 // Reload the view
@@ -300,8 +294,6 @@ const TemplatesController = {
             // Show error with AlertUtil
             if (window.AlertUtil) {
                 await AlertUtil.showError('Failed to update template status: ' + error.message);
-            } else {
-                alert('Failed to update template status: ' + error.message);
             }
         }
     },

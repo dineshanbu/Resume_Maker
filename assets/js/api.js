@@ -1,12 +1,12 @@
 // ============================================
-// GLOBAL API HANDLER
-// Single source of truth for all API calls
+// GLOBAL API HANDLER - SINGLE SOURCE OF TRUTH
 // ============================================
 
 class APIHandler {
     constructor() {
         this.baseURL = API_CONFIG.BASE_URL;
         this.endpoints = API_CONFIG.ENDPOINTS;
+        console.log('✅ APIHandler initialized with baseURL:', this.baseURL);
     }
 
     // Get current auth token
@@ -159,8 +159,24 @@ class APIHandler {
     }
 }
 
-// Create singleton instance
-const apiService = new APIHandler();
-
-// Export globally - SINGLE SOURCE OF TRUTH
-window.apiService = apiService;
+// ============================================
+// IMMEDIATELY CREATE AND EXPORT GLOBAL INSTANCE
+// THIS IS THE ONLY API SERVICE IN THE APPLICATION
+// ============================================
+(function() {
+    'use strict';
+    
+    // Create singleton instance
+    const apiService = new APIHandler();
+    
+    // Export to global window object IMMEDIATELY
+    window.apiService = apiService;
+    
+    // Log for debugging
+    console.log('✅ Global apiService ready:', typeof window.apiService);
+    
+    // Verify it's accessible
+    if (typeof window.apiService === 'undefined') {
+        console.error('❌ CRITICAL: apiService failed to set on window object!');
+    }
+})();

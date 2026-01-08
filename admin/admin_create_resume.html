@@ -837,13 +837,25 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!-- Centralized Security & API - CORRECT ORDER -->
+
+<!-- CRITICAL: Load in exact order -->
+<!-- STEP 1: Configuration -->
 <script src="/assets/js/config.js"></script>
+<!-- STEP 2: Alerts -->
 <script src="/assets/js/alerts.js"></script>
+<!-- STEP 3: Auth -->
 <script src="/assets/js/auth.js"></script>
+<!-- STEP 4: API Service (MUST be before any API calls) -->
 <script src="/assets/js/api.js"></script>
+
 <script>
-    const API_URL = 'http://localhost:5000/api/v1';
+    // Verify apiService is loaded
+    if (typeof window.apiService === 'undefined') {
+        console.error('\u274c CRITICAL: apiService not loaded in admin_create_resume.html');
+        document.body.innerHTML = '<div style="padding: 50px; text-align: center;"><h1>System Error</h1><p>Please refresh the page</p></div>';
+        throw new Error('apiService not available');
+    }
+    console.log('\u2705 apiService available in admin_create_resume.html');
     
     // ==================== SAMPLE PREVIEW DATA ====================
     const sampleData = {
@@ -1010,7 +1022,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('htmlCode').value = e.target.result;
-                alert('✅ HTML file loaded successfully!');
+                AlertUtil.showToast('✅ HTML file loaded successfully!', 'success');
             };
             reader.readAsText(file);
         }
@@ -1022,7 +1034,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('cssCode').value = e.target.result;
-                alert('✅ CSS file loaded successfully!');
+                AlertUtil.showToast('✅ CSS file loaded successfully!', 'success');
             };
             reader.readAsText(file);
         }
@@ -1046,7 +1058,7 @@
         const cssCode = document.getElementById('cssCode').value;
         
         if (!htmlCode.trim()) {
-            alert('⚠️ Please add HTML code first!');
+            AlertUtil.showToast('⚠️ Please add HTML code first!', 'warning');
             return;
         }
 
@@ -1110,7 +1122,7 @@
             console.log('✅ Preview rendered successfully');
         } catch (error) {
             console.error('Preview Error:', error);
-            alert('❌ Error rendering preview: ' + error.message);
+            AlertUtil.showToast('❌ Error rendering preview: ' + error.message, 'error');
             document.getElementById('templatePreview').innerHTML = `
                 <div class="alert alert-danger m-4">
                     <h5>Preview Error</h5>
@@ -1143,7 +1155,7 @@
         const iframe = document.getElementById('previewFrame');
         
         if (!iframe) {
-            alert('⚠️ Please refresh the preview first!');
+            AlertUtil.showToast('⚠️ Please refresh the preview first!', 'warning');
             return;
         }
 
@@ -1188,12 +1200,12 @@
                 // Remove loading state
                 loadingDiv.remove();
                 
-                alert('✅ JPG exported successfully!');
+                AlertUtil.showToast('✅ JPG exported successfully!', 'success');
             }, 'image/jpeg', 0.95);
 
         } catch (error) {
             console.error('Export Error:', error);
-            alert('❌ Failed to export as JPG: ' + error.message);
+            AlertUtil.showToast('❌ Failed to export as JPG: ' + error.message, 'error');
             // Remove loading state if error
             const loadingDiv = preview.querySelector('.spinner-border')?.closest('div');
             if (loadingDiv) loadingDiv.remove();
@@ -1214,7 +1226,7 @@
 
         // Validate required fields
         if (!templateName || !displayName || !description || !thumbnail || !profession || !htmlCode || !cssCode) {
-            alert('⚠️ Please fill all required fields!');
+            AlertUtil.showToast('⚠️ Please fill all required fields!', 'warning');
             return;
         }
 
@@ -1271,6 +1283,13 @@
     // ==================== INITIALIZE ====================
     document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Template Upload System Ready');
+        
+        // Verify apiService is available
+        if (typeof window.apiService === 'undefined') {
+            console.error('❌ apiService not available in DOMContentLoaded');
+            AlertUtil.showError('System initialization failed. Please refresh the page.');
+            return;
+        }
         
         // Check token
         const token = localStorage.getItem('accessToken');
