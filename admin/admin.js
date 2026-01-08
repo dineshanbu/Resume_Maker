@@ -130,6 +130,7 @@ class AdminPanel {
             'dashboard': 'Overview & Stats',
             'templates': 'All Templates',
             'create-template': 'Create New Template',
+            'create-resume-simple': 'Create Resume Template',
             'categories': 'Template Categories',
             'pending-review': 'Pending Review',
             'template-analytics': 'Template Analytics',
@@ -172,6 +173,9 @@ class AdminPanel {
                 case 'create-template':
                     // Redirect to existing template creator
                     window.location.href = '/admin/admin_create_resume.html';
+                    break;
+                case 'create-resume-simple':
+                    await this.loadCreateResume(content);
                     break;
                 case 'categories':
                     await this.loadCategories(content);
@@ -222,6 +226,20 @@ class AdminPanel {
                 <div class="content-card">
                     <h2>Template Categories</h2>
                     <p>Loading categories...</p>
+                </div>
+            `;
+        }
+    }
+
+    async loadCreateResume(container) {
+        // Load create resume controller
+        if (typeof CreateResumeController !== 'undefined') {
+            await CreateResumeController.render(container);
+        } else {
+            container.innerHTML = `
+                <div class="content-card">
+                    <h2>Create Resume Template</h2>
+                    <p>Loading form...</p>
                 </div>
             `;
         }

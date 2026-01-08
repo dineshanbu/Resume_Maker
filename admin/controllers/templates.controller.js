@@ -33,8 +33,17 @@ const TemplatesController = {
         this.loading = true;
         try {
             const response = await apiService.get('/api/v1/admin/templates');
+            
+            // Handle response structure: { success: true, data: { templates: [...] } }
             if (response.success && response.data) {
-                this.templates = response.data;
+                if (response.data.templates) {
+                    this.templates = response.data.templates;
+                } else if (Array.isArray(response.data)) {
+                    this.templates = response.data;
+                } else {
+                    console.warn('Unexpected API response format:', response);
+                    this.templates = [];
+                }
             } else if (Array.isArray(response)) {
                 this.templates = response;
             } else {
@@ -166,20 +175,46 @@ const TemplatesController = {
                 <td>${tierBadge}</td>
                 <td>${statusBadge}</td>
                 <td style="text-align: center;">
-                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                    <div class="btn-group" role="group">
                         <button 
                             class="btn btn-sm btn-outline-primary" 
                             onclick="TemplatesController.viewTemplate('${template._id || template.id}')"
                             data-testid="view-template-btn"
+                            title="View Details"
                         >
                             <i class="bi bi-eye"></i>
                         </button>
                         <button 
-                            class="btn btn-sm btn-outline-${template.isActive ? 'warning' : 'success'}" 
-                            onclick="TemplatesController.toggleStatus('${template._id || template.id}', ${!template.isActive})"
-                            data-testid="toggle-status-btn"
+                            class="btn btn-sm btn-outline-info" 
+                            onclick="TemplatesController.viewAnalytics('${template._id || template.id}')"
+                            data-testid="analytics-template-btn"
+                            title="View Analytics"
                         >
-                            <i class="bi bi-${template.isActive ? 'pause' : 'play'}-circle"></i>
+                            <i class="bi bi-graph-up"></i>
+                        </button>
+                        <button 
+                            class="btn btn-sm btn-outline-success" 
+                            onclick="TemplatesController.editTemplate('${template._id || template.id}')"
+                            data-testid="edit-template-btn"
+                            title="Edit Template"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button 
+                            class="btn btn-sm btn-outline-secondary" 
+                            onclick="TemplatesController.duplicateTemplate('${template._id || template.id}')"
+                            data-testid="duplicate-template-btn"
+                            title="Duplicate Template"
+                        >
+                            <i class="bi bi-files"></i>
+                        </button>
+                        <button 
+                            class="btn btn-sm btn-outline-danger" 
+                            onclick="TemplatesController.deleteTemplate('${template._id || template.id}')"
+                            data-testid="delete-template-btn"
+                            title="Delete Template"
+                        >
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </td>
@@ -313,5 +348,177 @@ const TemplatesController = {
                 </button>
             </div>
         `;
+    },
+
+    // ==================== NEW METHODS ====================
+
+    async editTemplate(templateId) {
+        const template = this.templates.find(t => (t._id || t.id) === templateId);
+        if (!template) {
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Template not found');
+            }
+            return;
+        }
+
+        // Navigate to edit page with template ID
+        window.location.href = `/admin/admin_create_resume.html?edit=${templateId}`;
+    },
+
+    async viewAnalytics(templateId) {
+        try {
+            // Fetch analytics data
+            const response = await apiService.get(`/api/v1/admin/templates/${templateId}/analytics`);
+            
+            if (response.success && response.data) {
+                const analytics = response.data;
+                const template = analytics.template;
+                
+                // Display analytics in a modal
+                if (window.AlertUtil) {
+                    const analyticsHTML = `
+                        <div style="text-align: left;">
+                            <h4 style="margin-bottom: 1rem; color: #667eea;">${template.name}</h4>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                                    <div style="font-size: 0.875rem; color: #6c757d;">Total Usage</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #495057;">${template.usageCount || 0}</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                                    <div style="font-size: 0.875rem; color: #6c757d;">Resume Count</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #495057;">${analytics.resumeCount || 0}</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                                    <div style="font-size: 0.875rem; color: #6c757d;">Avg Rating</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #495057;">${analytics.averageRating || 0} ⭐</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                                    <div style="font-size: 0.875rem; color: #6c757d;">Total Ratings</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #495057;">${analytics.totalRatings || 0}</div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 1rem;">
+                                <strong>Status:</strong> 
+                                <span style="color: ${template.isActive ? '#28a745' : '#6c757d'};">
+                                    ${template.isActive ? '✓ Active' : '○ Inactive'}
+                                </span>
+                            </div>
+                            
+                            ${analytics.recentUsage && analytics.recentUsage.length > 0 ? `
+                                <div style="margin-top: 1.5rem;">
+                                    <strong>Recent Usage:</strong>
+                                    <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                        ${analytics.recentUsage.slice(0, 5).map(usage => `
+                                            <li style="margin-bottom: 0.25rem;">${usage}</li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    await AlertUtil.showInfo(analyticsHTML, 'Template Analytics');
+                }
+            } else {
+                throw new Error('Failed to fetch analytics data');
+            }
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Failed to load analytics: ' + error.message);
+            }
+        }
+    },
+
+    async duplicateTemplate(templateId) {
+        const template = this.templates.find(t => (t._id || t.id) === templateId);
+        if (!template) {
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Template not found');
+            }
+            return;
+        }
+
+        // Confirm duplication
+        let confirmed = false;
+        if (window.AlertUtil) {
+            confirmed = await AlertUtil.showConfirm(
+                `Create a copy of "${template.displayName || template.name}"?`,
+                'Duplicate Template',
+                'Yes, Duplicate',
+                'Cancel'
+            );
+        }
+
+        if (!confirmed) return;
+
+        try {
+            // Call duplicate API
+            const response = await apiService.post(`/api/v1/admin/templates/${templateId}/duplicate`);
+
+            if (response.success || response.data) {
+                if (window.AlertUtil) {
+                    await AlertUtil.showSuccess('Template duplicated successfully!');
+                }
+                
+                // Reload templates
+                const container = document.getElementById('adminContent');
+                await this.render(container);
+            } else {
+                throw new Error(response.message || 'Failed to duplicate template');
+            }
+        } catch (error) {
+            console.error('Error duplicating template:', error);
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Failed to duplicate template: ' + error.message);
+            }
+        }
+    },
+
+    async deleteTemplate(templateId) {
+        const template = this.templates.find(t => (t._id || t.id) === templateId);
+        if (!template) {
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Template not found');
+            }
+            return;
+        }
+
+        // Confirm deletion
+        let confirmed = false;
+        if (window.AlertUtil) {
+            confirmed = await AlertUtil.showConfirm(
+                `Are you sure you want to delete "${template.displayName || template.name}"? This action cannot be undone.`,
+                'Delete Template',
+                'Yes, Delete',
+                'Cancel'
+            );
+        }
+
+        if (!confirmed) return;
+
+        try {
+            // Call delete API
+            const response = await apiService.delete(`/api/v1/admin/templates/${templateId}`);
+
+            if (response.success || response.statusCode === 200) {
+                if (window.AlertUtil) {
+                    await AlertUtil.showSuccess('Template deleted successfully!');
+                }
+                
+                // Reload templates
+                const container = document.getElementById('adminContent');
+                await this.render(container);
+            } else {
+                throw new Error(response.message || 'Failed to delete template');
+            }
+        } catch (error) {
+            console.error('Error deleting template:', error);
+            if (window.AlertUtil) {
+                await AlertUtil.showError('Failed to delete template: ' + error.message);
+            }
+        }
     }
 };

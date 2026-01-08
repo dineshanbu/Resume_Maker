@@ -45,7 +45,7 @@ const DashboardController = {
             // Load stats and recent templates
             const [statsResponse, templatesResponse] = await Promise.all([
                 apiService.get('/api/v1/admin/stats').catch(() => null),
-                apiService.get('/api/v1/admin/templates?limit=5').catch(() => null)
+                apiService.get('/api/v1/admin/templates').catch(() => null)
             ]);
 
             // Process stats
@@ -63,9 +63,16 @@ const DashboardController = {
                 };
             }
 
-            // Process templates
-            if (templatesResponse && templatesResponse.data) {
-                this.recentTemplates = templatesResponse.data.slice(0, 5);
+            // Process templates - Handle the response structure from API
+            if (templatesResponse && templatesResponse.success && templatesResponse.data) {
+                // API returns { success: true, data: { templates: [...] } }
+                if (templatesResponse.data.templates) {
+                    this.recentTemplates = templatesResponse.data.templates.slice(0, 5);
+                } else if (Array.isArray(templatesResponse.data)) {
+                    this.recentTemplates = templatesResponse.data.slice(0, 5);
+                } else {
+                    this.recentTemplates = [];
+                }
             } else if (Array.isArray(templatesResponse)) {
                 this.recentTemplates = templatesResponse.slice(0, 5);
             } else {
