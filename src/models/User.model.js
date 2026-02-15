@@ -42,35 +42,35 @@ const userSchema = new mongoose.Schema({
     state: String,
     country: { type: String, default: 'India' }
   },
-  
+
   // OAuth Integration - Support multiple providers (array)
   authProvider: {
     type: [String],
     enum: ['local', 'google', 'linkedin'],
     default: ['local']
   },
-  
+
   googleId: {
     type: String,
     sparse: true,
     unique: true
   },
-  
+
   linkedinId: {
     type: String,
     sparse: true,
     unique: true
   },
-  
+
   // Email verification
   isVerified: {
     type: Boolean,
     default: false
   },
-  
+
   emailVerificationToken: String,
   emailVerificationExpires: Date,
-  
+
   isActive: {
     type: Boolean,
     default: true
@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
-  
+
   // User preferences
   preferences: {
     jobCategories: [String],
@@ -93,14 +93,14 @@ const userSchema = new mongoose.Schema({
     preferredLanguage: { type: String, default: 'en' },
     theme: { type: String, enum: ['light', 'dark'], default: 'light' }
   },
-  
+
   // Subscription info (reference)
   currentPlan: {
     type: String,
     enum: ['Free', 'Basic', 'Premium', 'FREE', 'PRO'],
     default: 'Free'
   },
-  
+
   // Plan details (reference to Plan model)
   planId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -112,6 +112,16 @@ const userSchema = new mongoose.Schema({
     enum: ['FREE', 'PRO'],
     default: 'FREE'
   },
+  subscriptionType: {
+    type: String,
+    enum: ['FREE', 'PREMIUM'],
+    default: 'FREE'
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ['ACTIVE', 'EXPIRED'],
+    default: 'ACTIVE'
+  },
   planStartDate: {
     type: Date,
     default: Date.now
@@ -120,11 +130,11 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null // NULL for FREE plan
   },
-  
+
   // Reset password
   resetPasswordToken: String,
   resetPasswordExpires: Date,
-  
+
   // Referral
   referralCode: {
     type: String,
@@ -137,7 +147,7 @@ const userSchema = new mongoose.Schema({
   },
 
   // ==================== USER PROFILE FIELDS ====================
-  
+
   // Basic Info
   dateOfBirth: {
     type: Date,
@@ -211,7 +221,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
-  
+
   // Language
   language: {
     type: String,
@@ -274,13 +284,13 @@ const userSchema = new mongoose.Schema({
     min: 0,
     max: 100
   }
-  
+
   // NOTE: Template usage tracking has been moved to UserTemplateUsage collection
   // The array-based approach (freeTemplateIdsUsed) was logically flawed:
   // - MongoDB $expr + $size + $addToSet does NOT enforce hard limits reliably
   // - $or conditions can bypass array-length constraints
   // - UserTemplateUsage collection with unique index provides mathematically correct enforcement
-  
+
 }, {
   timestamps: true
 });
@@ -292,21 +302,21 @@ userSchema.index({ role: 1 });
 userSchema.index({ referralCode: 1 });
 
 // Hash password before saving (only for local auth)
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // Only hash password if it's modified and user is using local auth
-  const hasLocalAuth = Array.isArray(this.authProvider) 
+  const hasLocalAuth = Array.isArray(this.authProvider)
     ? this.authProvider.includes('local')
     : this.authProvider === 'local';
-    
+
   if (!this.isModified('password') || !hasLocalAuth) {
     return next();
   }
-  
+
   // Password is required for local auth
   if (!this.password && hasLocalAuth) {
     return next(new Error('Password is required for local authentication'));
   }
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -317,7 +327,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Generate referral code before saving
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   if (!this.referralCode) {
     this.referralCode = this._id.toString().substring(0, 8).toUpperCase();
   }
@@ -325,11 +335,11 @@ userSchema.pre('save', function(next) {
 });
 
 // Method to compare password (for local auth)
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  const hasLocalAuth = Array.isArray(this.authProvider) 
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  const hasLocalAuth = Array.isArray(this.authProvider)
     ? this.authProvider.includes('local')
     : this.authProvider === 'local';
-    
+
   if (!hasLocalAuth) {
     throw new Error('Password comparison not available for OAuth-only users');
   }
@@ -337,7 +347,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 // Method to get public profile
-userSchema.methods.getPublicProfile = function() {
+userSchema.methods.getPublicProfile = function () {
   const user = this.toObject();
   delete user.password;
   delete user.resetPasswordToken;
@@ -349,13 +359,13 @@ userSchema.methods.getPublicProfile = function() {
 };
 
 // Static method to find or create user from Google OAuth
-userSchema.statics.findOrCreateFromGoogle = async function(profile) {
+userSchema.statics.findOrCreateFromGoogle = async function (profile) {
   let user = await this.findOne({ googleId: profile.id });
-  
+
   if (!user) {
     // Check if email already exists with local auth
     user = await this.findOne({ email: profile.emails[0].value });
-    
+
     if (user) {
       // Update existing user with Google ID
       user.googleId = profile.id;
@@ -377,20 +387,20 @@ userSchema.statics.findOrCreateFromGoogle = async function(profile) {
       });
     }
   }
-  
+
   return user;
 };
 
 // Check if user can access feature based on subscription
-userSchema.methods.canAccessFeature = async function(featureName) {
+userSchema.methods.canAccessFeature = async function (featureName) {
   const UserSubscription = mongoose.model('UserSubscription');
   const subscription = await UserSubscription.findOne({ userId: this._id });
-  
+
   if (!subscription || !subscription.isActive()) {
     // Free plan limitations
     return false;
   }
-  
+
   return await subscription.hasFeature(featureName);
 };
 
@@ -404,63 +414,63 @@ userSchema.methods.canAccessFeature = async function(featureName) {
  * - Education: 15%
  * - Language: 5%
  */
-userSchema.methods.calculateProfileCompletion = function() {
+userSchema.methods.calculateProfileCompletion = function () {
   let completion = 0;
-  
+
   // Personal Details (25%) - All required fields must be filled (name, email, phone, DOB, gender, marital status, country, state, city)
-  const personalDetailsComplete = 
-    this.fullName && 
-    this.email && 
-    this.phone && 
-    this.dateOfBirth && 
+  const personalDetailsComplete =
+    this.fullName &&
+    this.email &&
+    this.phone &&
+    this.dateOfBirth &&
     this.gender &&
     this.maritalStatus &&
-    this.location?.country && 
-    this.location?.state && 
+    this.location?.country &&
+    this.location?.state &&
     this.location?.city;
   if (personalDetailsComplete) completion += 25;
-  
+
   // Professional Summary (15%) - All required fields must be filled
-  const professionalSummaryComplete = 
-    this.headline && 
+  const professionalSummaryComplete =
+    this.headline &&
     this.aboutMe;
   if (professionalSummaryComplete) completion += 15;
-  
+
   // Employment Preferences (20%) - Required fields
-  const employmentPreferencesComplete = 
-    this.currentRole && 
-    this.employmentType && 
-    this.jobType && 
+  const employmentPreferencesComplete =
+    this.currentRole &&
+    this.employmentType &&
+    this.jobType &&
     this.noticePeriod;
   if (employmentPreferencesComplete) completion += 20;
-  
+
   // Skills (20%) - At least one primary skill required
-  const skillsComplete = 
-    Array.isArray(this.primarySkills) && 
-    this.primarySkills.length > 0 && 
-    this.primarySkills[0] && 
+  const skillsComplete =
+    Array.isArray(this.primarySkills) &&
+    this.primarySkills.length > 0 &&
+    this.primarySkills[0] &&
     this.primarySkills[0].trim() !== '';
   if (skillsComplete) completion += 20;
-  
+
   // Education (15%) - At least one education entry with all required fields
-  const educationComplete = 
-    Array.isArray(this.education) && 
-    this.education.length > 0 && 
-    this.education[0].degree && 
-    this.education[0].institution && 
-    this.education[0].passingYear && 
+  const educationComplete =
+    Array.isArray(this.education) &&
+    this.education.length > 0 &&
+    this.education[0].degree &&
+    this.education[0].institution &&
+    this.education[0].passingYear &&
     this.education[0].grade;
   if (educationComplete) completion += 15;
-  
+
   // Language (5%) - Language selected
   if (this.language) completion += 5;
-  
+
   this.profileCompletionPercentage = completion;
   return completion;
 };
 
 // Calculate profile completion before saving
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   // Calculate completion for all saves (both new and updates)
   // Skip only if this is a new document with minimal data
   if (this.isNew) {

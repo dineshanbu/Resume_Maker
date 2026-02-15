@@ -13,7 +13,9 @@ const {
   getResumeStats,
   updateResumeSection,
   exportResumeUrl,
-  getPublicResume
+  getPublicResume,
+  scanResumeATS,
+  improveResumeATS
 } = require('../controllers/resume.controller');
 const { authenticate, optionalAuth } = require('../middlewares/auth.middleware');
 const {
@@ -42,5 +44,9 @@ router.post('/:id/export-url', idParamValidation, exportResumeUrl);
 router.get('/:id/download-pdf', idParamValidation, downloadResumePDF);
 router.get('/:id/stats', idParamValidation, getResumeStats);
 router.patch('/:id/section/:section', updateResumeSection);
+
+// ATS analysis
+router.get('/:id/ats-scan', idParamValidation, scanResumeATS);
+router.post('/:id/ats-improve', idParamValidation, improveResumeATS);
 
 module.exports = router;

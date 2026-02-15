@@ -46,7 +46,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -177,6 +177,7 @@ app.use(`/api/${API_VERSION}/template-ratings`, require('./routes/templateRating
 app.use(`/api/${API_VERSION}/subscriptions`, subscriptionRoutes);
 app.use(`/api/${API_VERSION}/notifications`, notificationRoutes);
 app.use(`/api/${API_VERSION}/admin`, adminRoutes);
+app.use(`/api/${API_VERSION}/user/config`, require('./routes/user-config.routes'));
 
 // Public resume route (outside API versioning)
 app.use('/resume/public', require('./routes/publicResume.routes'));

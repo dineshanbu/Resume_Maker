@@ -28,6 +28,8 @@ const JobType = require('../../models/JobType.model');
 const State = require('../../models/State.model');
 const City = require('../../models/City.model');
 const EmailTemplate = require('../../models/EmailTemplate.model');
+const Theme = require('../../models/Theme.model');
+const SectionLayout = require('../../models/SectionLayout.model');
 
 // Map URL type to Model
 const getModelByType = (type) => {
@@ -48,7 +50,9 @@ const getModelByType = (type) => {
     'languages': LanguageMaster,
     'salary-ranges': SalaryRange,
     'plans': PlanMaster,
-    'email-templates': EmailTemplate
+    'email-templates': EmailTemplate,
+    'themes': Theme,
+    'section-layouts': SectionLayout
   };
   return modelMap[type] || null;
 };
@@ -354,7 +358,7 @@ const createMaster = asyncHandler(async (req, res) => {
   // Validate required fields
   const rules = getValidationRules(type);
   const errors = [];
-  
+
   rules.required.forEach(field => {
     if (!data[field] && data[field] !== 0) {
       errors.push(`${field} is required`);
@@ -511,7 +515,7 @@ const updateMaster = asyncHandler(async (req, res) => {
 
   const rules = getValidationRules(type);
   const errors = [];
-  
+
   // Merge existing data with updates for validation
   const mergedData = { ...existingItem.toObject(), ...data };
   rules.required.forEach(field => {
@@ -661,10 +665,10 @@ const toggleMasterStatus = asyncHandler(async (req, res) => {
     itemObj.countryName = itemObj.name;
   }
 
-  const statusMessage = type === 'email-templates' 
+  const statusMessage = type === 'email-templates'
     ? (item.isEnabled ? 'enabled' : 'disabled')
     : (item.status === 'Active' ? 'activated' : 'deactivated');
-  
+
   return successResponse(
     res,
     { item: itemObj },
@@ -726,7 +730,7 @@ const bulkUploadMasters = asyncHandler(async (req, res) => {
     const result = [];
     let current = '';
     let inQuotes = false;
-    
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
       if (char === '"') {
@@ -756,7 +760,7 @@ const bulkUploadMasters = asyncHandler(async (req, res) => {
 
     totalRecords++;
     const parts = parseCSVLine(line);
-    
+
     let itemData = {};
     let isValid = true;
 
@@ -1005,7 +1009,7 @@ const bulkToggleStatusMasters = asyncHandler(async (req, res) => {
   // Validate all IDs are valid ObjectIds
   const mongoose = require('mongoose');
   const validIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
-  
+
   if (validIds.length === 0) {
     return badRequestResponse(res, 'No valid IDs provided');
   }
@@ -1020,7 +1024,7 @@ const bulkToggleStatusMasters = asyncHandler(async (req, res) => {
     const items = await Model.find({ _id: { $in: validIds } });
     const activeIds = items.filter(item => item.status === 'Active').map(item => item._id);
     const inactiveIds = items.filter(item => item.status === 'Inactive').map(item => item._id);
-    
+
     // Use bulkWrite to toggle status
     const bulkOps = [
       ...activeIds.map(id => ({
@@ -1038,7 +1042,7 @@ const bulkToggleStatusMasters = asyncHandler(async (req, res) => {
     ];
 
     const result = await Model.bulkWrite(bulkOps);
-    
+
     return successResponse(res, {
       updatedCount: result.modifiedCount,
       requestedCount: ids.length,
@@ -1083,7 +1087,7 @@ const bulkDeleteMasters = asyncHandler(async (req, res) => {
   // Validate all IDs are valid ObjectIds
   const mongoose = require('mongoose');
   const validIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
-  
+
   if (validIds.length === 0) {
     return badRequestResponse(res, 'No valid IDs provided');
   }
@@ -1119,10 +1123,10 @@ const testEmailTemplate = asyncHandler(async (req, res) => {
   try {
     const EmailTemplate = require('../../models/EmailTemplate.model');
     const { sendEmail } = require('../../services/email.service');
-    
+
     // Get template (allow disabled templates for testing)
-    let template = await EmailTemplate.findOne({ 
-      emailType: emailType.toLowerCase() 
+    let template = await EmailTemplate.findOne({
+      emailType: emailType.toLowerCase()
     });
 
     if (!template) {
@@ -1136,7 +1140,7 @@ const testEmailTemplate = asyncHandler(async (req, res) => {
 
     // Replace variables in template
     const { html, text } = template.replaceVariables(variables);
-    
+
     // Send email directly (bypass the sendEmailFromTemplate to allow disabled templates)
     const result = await sendEmail({
       to,
@@ -1155,12 +1159,12 @@ const testEmailTemplate = asyncHandler(async (req, res) => {
     }, 'Test email sent successfully');
   } catch (error) {
     console.error('Test email error:', error);
-    
+
     // Provide more specific error messages
     if (error.code === 'EAUTH') {
       return badRequestResponse(res, 'Email authentication failed. Please check email service configuration.');
     }
-    
+
     return badRequestResponse(res, error.message || 'Failed to send test email');
   }
 });

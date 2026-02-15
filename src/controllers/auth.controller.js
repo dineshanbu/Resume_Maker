@@ -1,21 +1,24 @@
 // backend/src/controllers/auth.controller.js
 const User = require('../models/User.model');
 const OTP = require('../models/OTP.model');
+const Notification = require('../models/Notification.model');
+const Resume = require('../models/Resume.model');
+const Plan = require('../models/Plan.model');
 const asyncHandler = require('../utils/asyncHandler');
-const { 
-  successResponse, 
-  createdResponse, 
+const {
+  successResponse,
+  createdResponse,
   badRequestResponse,
   unauthorizedResponse,
   forbiddenResponse,
   errorResponse
 } = require('../utils/apiResponse');
 const { sendOTPEmail } = require('../services/email.service');
-const { 
-  generateTokens, 
-  setTokenCookie, 
+const {
+  generateTokens,
+  setTokenCookie,
   clearTokenCookie,
-  verifyRefreshToken 
+  verifyRefreshToken
 } = require('../utils/generateToken');
 const { OAuth2Client } = require('google-auth-library');
 const path = require('path');
@@ -38,7 +41,7 @@ if (!GOOGLE_CLIENT_ID) {
       path.join(__dirname, '../../google_signin.json'), // From src/controllers/
       path.resolve(__dirname, '../../google_signin.json') // Absolute path
     ];
-    
+
     let googleConfigPath = null;
     for (const testPath of possiblePaths) {
       if (fs.existsSync(testPath)) {
@@ -47,12 +50,12 @@ if (!GOOGLE_CLIENT_ID) {
         break;
       }
     }
-    
+
     if (googleConfigPath) {
       // Support both top-level client_id and web.client_id
       const googleConfig = JSON.parse(fs.readFileSync(googleConfigPath, 'utf-8'));
       GOOGLE_CLIENT_ID = googleConfig.web?.client_id || googleConfig.client_id;
-      
+
       if (GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes('your-google-client-id')) {
         console.log('✓ Google Client ID loaded from google_signin.json:', GOOGLE_CLIENT_ID);
       } else {
@@ -149,7 +152,7 @@ const signup = asyncHandler(async (req, res) => {
   console.log('📧 Generating OTP for user:', user.email);
   const otp = await OTP.createOTP(user._id, user.email, 1); // 1 minute expiry
   console.log('✓ OTP generated:', otp.otpCode, 'for email:', user.email);
-  
+
   try {
     console.log('📤 Sending OTP email to:', user.email);
     await sendOTPEmail(user, otp.otpCode, 1);
@@ -158,14 +161,14 @@ const signup = asyncHandler(async (req, res) => {
     console.error('✗ CRITICAL ERROR: Failed to send OTP email to:', user.email);
     console.error('Error message:', emailError.message);
     console.error('Error stack:', emailError.stack);
-    
+
     // Check if it's an authentication error
     if (emailError.message && emailError.message.includes('EAUTH')) {
       console.error('\n⚠ SMTP AUTHENTICATION ERROR DETECTED!');
       console.error('The email service credentials are incorrect or require App Password.');
       console.error('Please check your EMAIL_USER and EMAIL_PASSWORD environment variables.\n');
     }
-    
+
     // In development, still return success with OTP in response
     // In production, you might want to fail signup if email fails
     if (process.env.NODE_ENV === 'production') {
@@ -209,10 +212,10 @@ const login = asyncHandler(async (req, res) => {
   }
 
   // Check auth provider - if user signed up with Google, they must use Google login
-  const hasLocalAuth = Array.isArray(user.authProvider) 
+  const hasLocalAuth = Array.isArray(user.authProvider)
     ? user.authProvider.includes('local')
     : user.authProvider === 'local';
-    
+
   const hasGoogleAuth = Array.isArray(user.authProvider)
     ? user.authProvider.includes('google')
     : user.authProvider === 'google';
@@ -290,7 +293,7 @@ const googleLogin = asyncHandler(async (req, res) => {
       console.log('Token audience (aud):', decodedToken.aud);
       console.log('Token issuer (iss):', decodedToken.iss);
       console.log('Expected Client ID:', GOOGLE_CLIENT_ID);
-      
+
       if (decodedToken.aud && decodedToken.aud !== GOOGLE_CLIENT_ID) {
         console.error('❌ AUDIENCE MISMATCH!');
         console.error('Token was issued for:', decodedToken.aud);
@@ -337,27 +340,27 @@ const googleLogin = asyncHandler(async (req, res) => {
     if (user) {
       // CASE A: Email exists with authProvider = "google" → Normal login
       // CASE B: Email exists with authProvider = "local" → LINK accounts
-      const currentProviders = Array.isArray(user.authProvider) 
-        ? user.authProvider 
+      const currentProviders = Array.isArray(user.authProvider)
+        ? user.authProvider
         : [user.authProvider];
-      
+
       // Add Google to providers if not already present
       if (!currentProviders.includes('google')) {
         user.authProvider = [...currentProviders, 'google'];
       }
-      
+
       // Link Google ID if not already linked
       if (!user.googleId) {
         user.googleId = googleId;
       }
-      
+
       // Google users are always verified
       user.isVerified = true;
-      
+
       if (!user.profilePicture && picture) {
         user.profilePicture = picture;
       }
-      
+
       // Ensure role and currentPlan defaults
       if (!user.role) {
         user.role = 'user';
@@ -365,7 +368,7 @@ const googleLogin = asyncHandler(async (req, res) => {
       if (!user.currentPlan) {
         user.currentPlan = 'Free';
       }
-      
+
       // Assign FREE plan if not already assigned
       if (!user.planId || !user.planName) {
         const Plan = require('../models/Plan.model');
@@ -377,7 +380,7 @@ const googleLogin = asyncHandler(async (req, res) => {
           user.planExpiryDate = null;
         }
       }
-      
+
       user.lastLogin = Date.now();
       await user.save();
     } else {
@@ -408,7 +411,7 @@ const googleLogin = asyncHandler(async (req, res) => {
         });
         freePlan = defaultFreePlan;
       }
-      
+
       user = await User.create({
         fullName,
         email,
@@ -449,7 +452,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     console.error('Google token verification error:', error.message);
     console.error('Error details:', error);
     console.error('Client ID being used:', GOOGLE_CLIENT_ID);
-    
+
     // Handle specific Google token errors
     if (error.message && error.message.toLowerCase().includes('expired')) {
       return unauthorizedResponse(res, 'Google token expired');
@@ -479,9 +482,46 @@ const logout = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getCurrentUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const userId = req.user._id;
 
-  return successResponse(res, { user }, 'User profile retrieved successfully');
+  // Fetch user with plan populated if possible
+  const user = await User.findById(userId).populate('planId');
+
+  if (!user) {
+    return badRequestResponse(res, 'User not found');
+  }
+
+  // Get unread notification count
+  const unreadNotificationsCount = await Notification.countDocuments({
+    userId,
+    isRead: false
+  });
+
+  // Get total resume count
+  const totalResumesCount = await Resume.countDocuments({
+    userId
+  });
+
+  // Get 5 most recent resumes for dashboard quick access
+  const recentResumes = await Resume.find({ userId })
+    .sort({ updatedAt: -1 })
+    .limit(5)
+    .select('title status completionPercentage updatedAt templateId');
+
+  // Prepare full response data
+  const responseData = {
+    user: user.getPublicProfile(),
+    notificationCount: unreadNotificationsCount,
+    totalResumes: totalResumesCount,
+    recentResumes: recentResumes
+  };
+
+  // If user has a planId but it's not populated or needs specific info
+  if (user.planId) {
+    responseData.planDetails = user.planId;
+  }
+
+  return successResponse(res, responseData, 'User profile and dashboard data retrieved successfully');
 });
 
 /**
@@ -560,8 +600,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
   if (!user) {
     // Return success even if user doesn't exist (security measure)
     return successResponse(
-      res, 
-      null, 
+      res,
+      null,
       'If your email exists, you will receive a password reset link'
     );
   }
@@ -569,8 +609,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
   // TODO: Generate reset token and send email
   // For now, just return success
   return successResponse(
-    res, 
-    null, 
+    res,
+    null,
     'Password reset link sent to your email'
   );
 });
@@ -640,14 +680,14 @@ const sendOTP = asyncHandler(async (req, res) => {
     console.error('✗ CRITICAL ERROR: Failed to send OTP email to:', user.email);
     console.error('Error message:', emailError.message);
     console.error('Error stack:', emailError.stack);
-    
+
     // Check if it's an authentication error
     if (emailError.message && emailError.message.includes('EAUTH')) {
       console.error('\n⚠ SMTP AUTHENTICATION ERROR DETECTED!');
       console.error('The email service credentials are incorrect or require App Password.');
       console.error('Please check your EMAIL_USER and EMAIL_PASSWORD environment variables.\n');
     }
-    
+
     return errorResponse(res, `Failed to send OTP email: ${emailError.message}. Please check email service configuration.`, 500);
   }
 });

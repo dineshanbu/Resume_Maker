@@ -50,7 +50,7 @@ const getAllTemplatesAdmin = asyncHandler(async (req, res) => {
 
   // Build query
   const query = {};
-  
+
   // Use status field (Active/Inactive) - support both old and new
   if (status === 'Active' || status === 'Inactive') {
     query.status = status;
@@ -59,12 +59,12 @@ const getAllTemplatesAdmin = asyncHandler(async (req, res) => {
   } else if (status === 'inactive') {
     query.status = 'Inactive';
   }
-  
+
   // Support categoryId filter
   if (categoryId) {
     query.categoryId = categoryId;
   }
-  
+
   // Legacy support
   if (profession) query.profession = profession;
   if (tier) query.subscriptionTier = tier;
@@ -114,8 +114,8 @@ const getAllTemplatesAdmin = asyncHandler(async (req, res) => {
  * @access  Private (Admin only)
  */
 const createTemplate = asyncHandler(async (req, res) => {
-  // Validate image is required for creation
-  if (!req.file) {
+  // Validate image is required for creation (either as file or existing URL)
+  if (!req.file && !req.body.thumbnailImage && !req.body.previewImage) {
     return validationErrorResponse(res, ['Template preview image is required']);
   }
 
@@ -131,97 +131,119 @@ const createTemplate = asyncHandler(async (req, res) => {
 
   const templateData = req.body;
 
-    // Validate required fields
-    const errors = [];
-    if (!templateData.name) errors.push('Template name is required');
-    if (!templateData.categoryId && !templateData.category) errors.push('Category is required');
-    if (!templateData.templateHtml) errors.push('Template HTML is required');
+  // Validate required fields
+  const errors = [];
+  if (!templateData.name) errors.push('Template name is required');
+  if (!templateData.categoryId && !templateData.category) errors.push('Category is required');
+  if (!templateData.templateHtml) errors.push('Template HTML is required');
 
-    if (errors.length > 0) {
-      return validationErrorResponse(res, errors);
-    }
+  if (errors.length > 0) {
+    return validationErrorResponse(res, errors);
+  }
 
-    // Handle category - support both categoryId (ObjectId) and category (name)
-    let categoryId = templateData.categoryId;
-    const mongoose = require('mongoose');
-    
-    if (!categoryId && templateData.category) {
-      // If category name is provided, find the category by name (case-insensitive)
-      const category = await TemplateCategory.findOne({ 
-        name: { $regex: new RegExp(`^${templateData.category.trim()}$`, 'i') },
-        status: 'Active'
-      });
-      
-      if (!category) {
-        // Try to find any category with similar name (even inactive) for better error message
-        const similarCategory = await TemplateCategory.findOne({ 
-          name: { $regex: new RegExp(`^${templateData.category.trim()}$`, 'i') }
-        });
-        
-        if (similarCategory) {
-          return badRequestResponse(res, `Category "${templateData.category}" exists but is Inactive. Please activate it in Master Data first.`);
-        }
-        
-        // List available categories for better error message
-        const availableCategories = await TemplateCategory.find({ status: 'Active' }).select('name').limit(10);
-        const categoryNames = availableCategories.map(c => c.name).join(', ');
-        
-        return badRequestResponse(res, `Category "${templateData.category}" not found. Available categories: ${categoryNames || 'None'}. Please create it in Master Data (Template Categories) first.`);
-      }
-      categoryId = category._id;
-    }
+  // Handle category - support both categoryId (ObjectId) and category (name)
+  let categoryId = templateData.categoryId;
+  const mongoose = require('mongoose');
 
-    // Validate categoryId exists and is valid ObjectId
-    if (!categoryId) {
-      return badRequestResponse(res, 'Category is required');
-    }
-    
-    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-      return badRequestResponse(res, 'Invalid category ID format');
-    }
-    
-    const category = await TemplateCategory.findById(categoryId);
-    if (!category) {
-      return badRequestResponse(res, 'Category not found');
-    }
-
-    // Check if template with same name exists
-    const existingTemplate = await Template.findOne({ name: templateData.name });
-    if (existingTemplate) {
-      return res.status(409).json({
-        success: false,
-        message: 'Template with this name already exists'
-      });
-    }
-
-  try {
-    // Upload image to Cloudinary
-    const uploadResult = await uploadImage(req.file.buffer, {
-      folder: 'templates/thumbnails',
-      mimeType: req.file.mimetype,
-      transformation: [
-        { width: 800, height: 1000, crop: 'fill', gravity: 'auto' },
-        { quality: 'auto', fetch_format: 'auto' }
-      ]
+  if (!categoryId && templateData.category) {
+    // If category name is provided, find the category by name (case-insensitive)
+    const category = await TemplateCategory.findOne({
+      name: { $regex: new RegExp(`^${templateData.category.trim()}$`, 'i') },
+      status: 'Active'
     });
 
-      // Prepare template data
-      const newTemplateData = {
-        name: templateData.name,
-        displayName: templateData.displayName || templateData.name, // Use name as default
-        description: templateData.description || `Resume template: ${templateData.name}`, // Default description
-        categoryId: categoryId,
-        templateHtml: templateData.templateHtml,
-        thumbnailImage: uploadResult.url,
-        status: templateData.status || 'Active',
-        createdBy: req.user._id
-      };
+    if (!category) {
+      // Try to find any category with similar name (even inactive) for better error message
+      const similarCategory = await TemplateCategory.findOne({
+        name: { $regex: new RegExp(`^${templateData.category.trim()}$`, 'i') }
+      });
+
+      if (similarCategory) {
+        return badRequestResponse(res, `Category "${templateData.category}" exists but is Inactive. Please activate it in Master Data first.`);
+      }
+
+      // List available categories for better error message
+      const availableCategories = await TemplateCategory.find({ status: 'Active' }).select('name').limit(10);
+      const categoryNames = availableCategories.map(c => c.name).join(', ');
+
+      return badRequestResponse(res, `Category "${templateData.category}" not found. Available categories: ${categoryNames || 'None'}. Please create it in Master Data (Template Categories) first.`);
+    }
+    categoryId = category._id;
+  }
+
+  // Validate categoryId exists and is valid ObjectId
+  if (!categoryId) {
+    return badRequestResponse(res, 'Category is required');
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    return badRequestResponse(res, 'Invalid category ID format');
+  }
+
+  const category = await TemplateCategory.findById(categoryId);
+  if (!category) {
+    return badRequestResponse(res, 'Category not found');
+  }
+
+  // Check if template with same name exists
+  const existingTemplate = await Template.findOne({ name: templateData.name });
+  if (existingTemplate) {
+    return res.status(409).json({
+      success: false,
+      message: 'Template with this name already exists'
+    });
+  }
+
+  try {
+    let thumbnailUrl = req.body.thumbnailImage || req.body.previewImage;
+
+    // If file uploaded, use it (priority)
+    if (req.file) {
+      // Upload image to Cloudinary
+      const uploadResult = await uploadImage(req.file.buffer, {
+        folder: 'templates/thumbnails',
+        mimeType: req.file.mimetype,
+        transformation: [
+          { width: 800, height: 1000, crop: 'fill', gravity: 'auto' },
+          { quality: 'auto', fetch_format: 'auto' }
+        ]
+      });
+      thumbnailUrl = uploadResult.url;
+    }
+
+    // Prepare template data
+    const newTemplateData = {
+      name: templateData.name,
+      displayName: templateData.displayName || templateData.name, // Use name as default
+      description: templateData.description || `Resume template: ${templateData.name}`, // Default description
+      categoryId: categoryId,
+      templateHtml: templateData.templateHtml,
+      thumbnailImage: thumbnailUrl,
+      status: templateData.status || 'Active',
+      createdBy: req.user._id
+    };
 
     // Optional fields
     if (templateData.htmlTemplate) newTemplateData.htmlTemplate = templateData.htmlTemplate;
     if (templateData.cssTemplate) newTemplateData.cssTemplate = templateData.cssTemplate;
     if (templateData.subscriptionTier) newTemplateData.subscriptionTier = templateData.subscriptionTier;
     if (templateData.thumbnail) newTemplateData.thumbnail = templateData.thumbnail;
+
+    // New builder fields - parse config if it's a string (from multipart/form-data)
+    if (templateData.config) {
+      try {
+        newTemplateData.config = typeof templateData.config === 'string'
+          ? JSON.parse(templateData.config)
+          : templateData.config;
+        console.log('✅ Parsed config for create:', newTemplateData.config);
+      } catch (e) {
+        console.error('❌ Failed to parse config:', e);
+        newTemplateData.config = templateData.config; // Use as-is if parsing fails
+      }
+    }
+    if (templateData.adminLayoutId) newTemplateData.adminLayoutId = templateData.adminLayoutId;
+    if (templateData.themeId) newTemplateData.themeId = templateData.themeId;
+    if (templateData.sectionLayouts) newTemplateData.sectionLayouts = templateData.sectionLayouts;
 
     // Create template
     const template = await Template.create(newTemplateData);
@@ -235,7 +257,7 @@ const createTemplate = asyncHandler(async (req, res) => {
     setImmediate(async () => {
       try {
         console.log('📢 Triggering notifications and emails for new template...');
-        
+
         // STEP 1: Fetch all active users (role = "user", isActive = true)
         const User = require('../../models/User.model');
         const activeUsers = await User.find({
@@ -294,7 +316,22 @@ const createTemplate = asyncHandler(async (req, res) => {
 const getTemplateById = asyncHandler(async (req, res) => {
   const template = await Template.findById(req.params.id)
     .populate('categoryId', 'name status')
-    .populate('createdBy', 'fullName email');
+    .populate('createdBy', 'fullName email')
+    .populate('themeId')
+    .populate('adminLayoutId')
+    .populate([
+      { path: 'sectionLayouts.header' },
+      { path: 'sectionLayouts.summary' },
+      { path: 'sectionLayouts.experience' },
+      { path: 'sectionLayouts.education' },
+      { path: 'sectionLayouts.skills' },
+      { path: 'sectionLayouts.projects' },
+      { path: 'sectionLayouts.certifications' },
+      { path: 'sectionLayouts.languages' },
+      { path: 'sectionLayouts.achievements' },
+      { path: 'sectionLayouts.interests' },
+      { path: 'sectionLayouts.references' }
+    ]);
 
   if (!template) {
     return notFoundResponse(res, 'Template not found');
@@ -319,28 +356,28 @@ const updateTemplate = asyncHandler(async (req, res) => {
   if (req.body.categoryId || req.body.category) {
     let categoryId = req.body.categoryId;
     const mongoose = require('mongoose');
-    
+
     // If category name is provided instead of categoryId, find it
     if (!categoryId && req.body.category) {
-      const category = await TemplateCategory.findOne({ 
+      const category = await TemplateCategory.findOne({
         name: { $regex: new RegExp(`^${req.body.category.trim()}$`, 'i') },
         status: 'Active'
       });
-      
+
       if (!category) {
         // Try to find any category with similar name (even inactive) for better error message
-        const similarCategory = await TemplateCategory.findOne({ 
+        const similarCategory = await TemplateCategory.findOne({
           name: { $regex: new RegExp(`^${req.body.category.trim()}$`, 'i') }
         });
-        
+
         if (similarCategory) {
           return badRequestResponse(res, `Category "${req.body.category}" exists but is Inactive. Please activate it in Master Data first.`);
         }
-        
+
         // List available categories for better error message
         const availableCategories = await TemplateCategory.find({ status: 'Active' }).select('name').limit(10);
         const categoryNames = availableCategories.map(c => c.name).join(', ');
-        
+
         return badRequestResponse(res, `Category "${req.body.category}" not found. Available categories: ${categoryNames || 'None'}. Please create it in Master Data (Template Categories) first.`);
       }
       categoryId = category._id;
@@ -352,7 +389,7 @@ const updateTemplate = asyncHandler(async (req, res) => {
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
         return badRequestResponse(res, 'Invalid category ID format');
       }
-      
+
       const category = await TemplateCategory.findById(categoryId);
       if (!category) {
         return badRequestResponse(res, 'Category not found');
@@ -399,6 +436,24 @@ const updateTemplate = asyncHandler(async (req, res) => {
     } catch (error) {
       console.error('Image upload error:', error);
       return badRequestResponse(res, `Failed to upload image: ${error.message}`);
+    }
+  }
+
+  // Parse config and other JSON fields if they're strings (from multipart/form-data)
+  if (req.body.config && typeof req.body.config === 'string') {
+    try {
+      req.body.config = JSON.parse(req.body.config);
+      console.log('✅ Parsed config for update:', req.body.config);
+    } catch (e) {
+      console.error('❌ Failed to parse config:', e);
+    }
+  }
+
+  if (req.body.sectionLayouts && typeof req.body.sectionLayouts === 'string') {
+    try {
+      req.body.sectionLayouts = JSON.parse(req.body.sectionLayouts);
+    } catch (e) {
+      console.error('❌ Failed to parse sectionLayouts:', e);
     }
   }
 

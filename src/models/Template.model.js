@@ -16,38 +16,38 @@ const templateSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  
+
   // Template thumbnail preview (legacy)
   thumbnail: {
     type: String,
     required: false
   },
-  
+
   // Template preview image (Cloudinary URL) - Required
   thumbnailImage: {
     type: String,
     required: true,
     trim: true
   },
-  
+
   // HTML Template content
   htmlTemplate: {
     type: String,
     required: false
   },
-  
+
   // Template HTML (placeholder-based) - Primary field
   templateHtml: {
     type: String,
     required: true
   },
-  
+
   // CSS for the template
   cssTemplate: {
     type: String,
     required: false
   },
-  
+
   // Category reference (from Template Category Master)
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -55,21 +55,21 @@ const templateSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  
+
   // Profession/Category (deprecated - use categoryId)
   profession: {
     type: String,
     required: false,
-   
+
   },
-  
+
   // Template style category
   styleCategory: {
     type: String,
     enum: ['Modern', 'Classic', 'Creative', 'Minimal', 'Professional'],
     default: 'Professional'
   },
-  
+
   // Color scheme
   colorScheme: {
     primary: { type: String, default: '#2c3e50' },
@@ -78,7 +78,7 @@ const templateSchema = new mongoose.Schema({
     text: { type: String, default: '#333333' },
     background: { type: String, default: '#ffffff' }
   },
-  
+
   // Available sections in this template
   availableSections: {
     personalInfo: { type: Boolean, default: true },
@@ -93,21 +93,15 @@ const templateSchema = new mongoose.Schema({
     interests: { type: Boolean, default: false },
     references: { type: Boolean, default: false }
   },
-  
-  // Subscription tier required
-  subscriptionTier: {
-    type: String,
-    enum: ['free', 'basic', 'premium'],
-    default: 'free',
-    index: true
-  },
-  
+
+
+
   // Template metadata
   isActive: {
     type: Boolean,
     default: true
   },
-  
+
   // Status field (Active/Inactive) - Primary status field
   status: {
     type: String,
@@ -115,30 +109,32 @@ const templateSchema = new mongoose.Schema({
     default: 'Active',
     index: true
   },
-  
-  isPremium: {
-    type: Boolean,
-    default: false
+
+  accessType: {
+    type: String,
+    enum: ['FREE', 'PREMIUM', 'BOTH'],
+    default: 'FREE',
+    index: true
   },
-  
+
   // Created by admin user
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: false
   },
-  
+
   usageCount: {
     type: Number,
     default: 0
   },
-  
+
   // Rating fields (legacy - kept for backward compatibility)
   rating: {
     average: { type: Number, default: 0 },
     count: { type: Number, default: 0 }
   },
-  
+
   // New rating fields (primary)
   averageRating: {
     type: Number,
@@ -155,9 +151,9 @@ const templateSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  
+
   tags: [String],
-  
+
   // Custom fields configuration
   customFields: [{
     fieldName: String,
@@ -167,12 +163,43 @@ const templateSchema = new mongoose.Schema({
     required: Boolean,
     section: String
   }],
-  
+
   // Preview data for demo
   previewData: {
     type: mongoose.Schema.Types.Mixed
+  },
+
+  // --- Master Configuration References ---
+  adminLayoutId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AdminLayout',
+    required: false
+  },
+  themeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Theme',
+    required: false
+  },
+  sectionLayouts: {
+    header: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    summary: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    experience: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    education: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    skills: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    projects: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    certifications: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    languages: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    achievements: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    interests: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' },
+    references: { type: mongoose.Schema.Types.ObjectId, ref: 'SectionLayout' }
+  },
+
+  // JSON Config for the new builder
+  config: {
+    type: mongoose.Schema.Types.Mixed,
+    required: false
   }
-  
+
 }, {
   timestamps: true
 });
@@ -185,25 +212,50 @@ templateSchema.index({ categoryId: 1, status: 1 });
 templateSchema.index({ tags: 1 });
 
 // Pre-save hook to sync status with isActive for backward compatibility
-templateSchema.pre('save', function(next) {
-  // Sync status with isActive
+templateSchema.pre('save', function (next) {
+  // Sync status and isActive
   if (this.isModified('status') || this.isNew) {
     this.isActive = this.status === 'Active';
   } else if (this.isModified('isActive')) {
-    // If isActive is modified but status is not, sync status
     this.status = this.isActive ? 'Active' : 'Inactive';
   }
   next();
 });
 
+// Sync status and isActive on updates
+const syncStatusOnUpdate = function (next) {
+  const update = this.getUpdate();
+
+  // Handle both direct updates and $set updates
+  const setUpdate = update.$set || update;
+
+  if (setUpdate.status !== undefined) {
+    setUpdate.isActive = setUpdate.status === 'Active';
+  } else if (setUpdate.isActive !== undefined) {
+    setUpdate.status = setUpdate.isActive ? 'Active' : 'Inactive';
+  }
+
+  // If we updated via $set, make sure we update the $set object
+  if (update.$set) {
+    update.$set = setUpdate;
+  }
+
+  next();
+};
+
+templateSchema.pre('findOneAndUpdate', syncStatusOnUpdate);
+templateSchema.pre('update', syncStatusOnUpdate);
+templateSchema.pre('updateOne', syncStatusOnUpdate);
+templateSchema.pre('updateMany', syncStatusOnUpdate);
+
 // Increment usage count
-templateSchema.methods.incrementUsage = async function() {
+templateSchema.methods.incrementUsage = async function () {
   this.usageCount += 1;
   await this.save();
 };
 
 // Add rating (legacy method - kept for backward compatibility)
-templateSchema.methods.addRating = async function(rating) {
+templateSchema.methods.addRating = async function (rating) {
   const totalRating = (this.rating.average * this.rating.count) + rating;
   this.rating.count += 1;
   this.rating.average = totalRating / this.rating.count;
@@ -213,21 +265,40 @@ templateSchema.methods.addRating = async function(rating) {
   await this.save();
 };
 
-// Get templates by profession (legacy method - updated to use status)
-templateSchema.statics.getByProfession = async function(profession, userTier = 'free') {
-  const tiers = {
+// Get templates by profession (legacy method - updated to be resilient)
+templateSchema.statics.getByProfession = async function (profession, userTier = 'free') {
+  const tierHierarchy = {
     free: ['free'],
     basic: ['free', 'basic'],
     premium: ['free', 'basic', 'premium']
   };
-  
+
+  const accessHierarchy = {
+    free: ['FREE', 'BOTH'],
+    basic: ['FREE', 'BOTH'],
+    premium: ['FREE', 'PREMIUM', 'BOTH']
+  };
+
   return await this.find({
-    profession: profession,
-    subscriptionTier: { $in: tiers[userTier] },
-    status: 'Active'
+    $and: [
+      { profession: profession },
+      {
+        $or: [
+          { status: 'Active' },
+          { isActive: true }
+        ]
+      },
+      {
+        $or: [
+          { subscriptionTier: { $in: tierHierarchy[userTier] } },
+          { accessType: { $in: accessHierarchy[userTier] } },
+          { subscriptionTier: { $exists: false }, accessType: { $exists: false } }
+        ]
+      }
+    ]
   })
-  .populate('categoryId', 'name status')
-  .sort({ usageCount: -1 });
+    .populate('categoryId', 'name status')
+    .sort({ usageCount: -1 });
 };
 
 const Template = mongoose.model('Template', templateSchema);

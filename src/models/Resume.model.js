@@ -134,6 +134,25 @@ const resumeSchema = new mongoose.Schema({
     phone: String
   }],
 
+  // ATS Analysis History (optional)
+  // Stores historical ATS scan results so we can show improvements over time
+  atsHistory: [{
+    score: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    keywordMatch: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+
   // Resume Metadata
   isPublic: {
     type: Boolean,

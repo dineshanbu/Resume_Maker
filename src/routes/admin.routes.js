@@ -20,6 +20,7 @@ const {
 
 // Import master routes
 const masterRoutes = require('./master.routes');
+const layoutRoutes = require('./layout.routes');
 
 // All admin routes require authentication and admin role
 router.use(authenticate);
@@ -84,6 +85,7 @@ router.patch('/templates/:id/rating-toggle', toggleTemplateRating);
 
 // Mount master routes
 router.use('/masters', masterRoutes);
+router.use('/', layoutRoutes);
 
 // ============================================
 // USER MANAGEMENT ROUTES

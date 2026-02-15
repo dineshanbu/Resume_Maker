@@ -1,13 +1,15 @@
 // backend/src/controllers/resume.controller.js
 const Resume = require('../models/Resume.model');
 const asyncHandler = require('../utils/asyncHandler');
-const { 
-  successResponse, 
+const {
+  successResponse,
   createdResponse,
   notFoundResponse,
   forbiddenResponse,
   badRequestResponse
 } = require('../utils/apiResponse');
+const { analyzeResumeForATS } = require('../services/atsAnalysis.service');
+const { generateAtsSummary, generateAtsImprovements } = require('../services/ai.service');
 
 /**
  * Validate template access and track template usage using UserTemplateUsage collection
@@ -46,24 +48,24 @@ async function validateAndTrackTemplateAccess({ userId, plan, template, template
   const mongoose = require('mongoose');
   const ObjectId = mongoose.Types.ObjectId;
   const UserTemplateUsage = require('../models/UserTemplateUsage.model');
-  
+
   // Validate plan structure
   if (!plan || !plan.features || typeof plan.features !== 'object') {
     throw new Error('Invalid plan structure: plan.features is missing or invalid');
   }
 
   // Convert templateId to ObjectId for comparison
-  const templateObjectId = typeof templateId === 'string' 
-    ? new ObjectId(templateId) 
-    : templateId instanceof ObjectId 
-      ? templateId 
+  const templateObjectId = typeof templateId === 'string'
+    ? new ObjectId(templateId)
+    : templateId instanceof ObjectId
+      ? templateId
       : new ObjectId(templateId);
 
   // Convert userId to ObjectId
-  const userObjectId = typeof userId === 'string' 
-    ? new ObjectId(userId) 
-    : userId instanceof ObjectId 
-      ? userId 
+  const userObjectId = typeof userId === 'string'
+    ? new ObjectId(userId)
+    : userId instanceof ObjectId
+      ? userId
       : new ObjectId(userId);
 
   // RULE 1: Premium Template Access Check (ALWAYS - regardless of status)
@@ -92,8 +94,8 @@ async function validateAndTrackTemplateAccess({ userId, plan, template, template
   // Only validate if: FREE plan + free template + limits enabled
   if (isFreeTemplate && isFreePlan && !resumeCreateUnlimited) {
     // Get limit from plan
-    const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number' 
-      ? plan.features.maxFreeTemplates 
+    const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number'
+      ? plan.features.maxFreeTemplates
       : parseInt(plan.features?.maxFreeTemplates) || null;
 
     if (maxFreeTemplates !== null && maxFreeTemplates >= 0) {
@@ -224,7 +226,7 @@ const createResume = asyncHandler(async (req, res) => {
   const User = require('../models/User.model');
   // Fetch user from DB (template usage is tracked in UserTemplateUsage collection, not User document)
   const user = await User.findById(req.user._id);
-  
+
   if (!user) {
     return forbiddenResponse(res, 'User not found');
   }
@@ -298,19 +300,19 @@ const createResume = asyncHandler(async (req, res) => {
   // Only check ACTIVE resume count when creating as ACTIVE
   if (!isDraft && isActive) {
     const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true;
-    
+
     if (!resumeCreateUnlimited) {
       // Count user's ACTIVE resumes (status = 'Completed')
-      const activeResumeCount = await Resume.countDocuments({ 
+      const activeResumeCount = await Resume.countDocuments({
         userId: user._id,
         status: 'Completed'
       });
-      
+
       // Get limit from plan.features.maxFreeTemplates
-      const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number' 
-        ? plan.features.maxFreeTemplates 
+      const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number'
+        ? plan.features.maxFreeTemplates
         : parseInt(plan.features?.maxFreeTemplates) || null;
-      
+
       // Block if user already has maximum ACTIVE resumes
       if (maxFreeTemplates !== null && maxFreeTemplates >= 0 && activeResumeCount >= maxFreeTemplates) {
         return res.status(403).json({
@@ -354,7 +356,7 @@ const createResume = asyncHandler(async (req, res) => {
   await resume.populate('templateId', 'name categoryId templateHtml displayName thumbnailImage thumbnail');
   await resume.populate('templateId.categoryId', 'name');
   await resume.populate('userId', 'fullName email');
-  
+
   // Calculate initial completion percentage
   if (resumeData) {
     const completionPercentage = calculateResumeCompletion(resume.toObject());
@@ -384,7 +386,7 @@ const createResume = asyncHandler(async (req, res) => {
  */
 const getMyResumes = asyncHandler(async (req, res) => {
   const { status } = req.query;
-  
+
   const query = { userId: req.user._id };
   if (status) {
     query.status = status;
@@ -398,48 +400,48 @@ const getMyResumes = asyncHandler(async (req, res) => {
   // Calculate completion percentage for each resume if not set
   const resumesWithCompletion = resumes.map(resume => {
     const resumeObj = resume.toObject();
-    
+
     // Calculate completion percentage if not set
     if (!resumeObj.completionPercentage && resumeObj.resumeData) {
       resumeObj.completionPercentage = calculateResumeCompletion(resumeObj);
     } else if (!resumeObj.completionPercentage) {
       resumeObj.completionPercentage = 0;
     }
-    
+
     // Determine status based on completion if status is 'Active' (legacy)
     if (resumeObj.status === 'Active') {
       resumeObj.status = resumeObj.completionPercentage >= 80 ? 'Completed' : 'Draft';
     }
-    
+
     // Map template thumbnail and name
     if (resumeObj.templateId) {
       resumeObj.templateThumbnail = resumeObj.templateId.thumbnailImage || resumeObj.templateId.thumbnail || null;
       resumeObj.templateName = resumeObj.templateId.displayName || resumeObj.templateId.name;
     }
-    
+
     // Map lastUpdated from updatedAt if not present
     if (!resumeObj.lastUpdated) {
       resumeObj.lastUpdated = resumeObj.updatedAt || resumeObj.createdAt;
     }
-    
+
     // Ensure status is 'Draft' or 'Completed' (map 'Active' to 'Completed')
     if (resumeObj.status === 'Active') {
       resumeObj.status = resumeObj.completionPercentage >= 80 ? 'Completed' : 'Draft';
     } else if (!resumeObj.status) {
       resumeObj.status = 'Draft';
     }
-    
+
     // Ensure completionPercentage is set
     if (!resumeObj.completionPercentage || resumeObj.completionPercentage === 0) {
       resumeObj.completionPercentage = calculateResumeCompletion(resumeObj);
     }
-    
+
     return resumeObj;
   });
 
   return successResponse(
-    res, 
-    { resumes: resumesWithCompletion, count: resumesWithCompletion.length }, 
+    res,
+    { resumes: resumesWithCompletion, count: resumesWithCompletion.length },
     'Resumes retrieved successfully'
   );
 });
@@ -581,28 +583,28 @@ const updateResume = asyncHandler(async (req, res) => {
   // Check if status is being changed to ACTIVE/Completed
   const currentStatus = resume.status;
   const newStatus = req.body.status;
-  const isChangingToActive = (newStatus === 'Completed' || newStatus === 'ACTIVE' || newStatus === 'Active') && 
-                              (currentStatus === 'Draft' || currentStatus === 'DRAFT');
-  const isChangingToDraft = (newStatus === 'Draft' || newStatus === 'DRAFT') && 
-                             (currentStatus === 'Completed' || currentStatus === 'ACTIVE' || currentStatus === 'Active');
+  const isChangingToActive = (newStatus === 'Completed' || newStatus === 'ACTIVE' || newStatus === 'Active') &&
+    (currentStatus === 'Draft' || currentStatus === 'DRAFT');
+  const isChangingToDraft = (newStatus === 'Draft' || newStatus === 'DRAFT') &&
+    (currentStatus === 'Completed' || currentStatus === 'ACTIVE' || currentStatus === 'Active');
 
   // If changing to ACTIVE, check plan limits (skip if changing to DRAFT)
   if (isChangingToActive) {
     const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true;
-    
+
     if (!resumeCreateUnlimited) {
       // Count user's ACTIVE resumes (excluding current resume if it was already active)
-      const activeResumeCount = await Resume.countDocuments({ 
+      const activeResumeCount = await Resume.countDocuments({
         userId: user._id,
         status: 'Completed',
         _id: { $ne: resume._id } // Exclude current resume from count
       });
-      
+
       // Get limit from plan.features.maxFreeTemplates
-      const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number' 
-        ? plan.features.maxFreeTemplates 
+      const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number'
+        ? plan.features.maxFreeTemplates
         : parseInt(plan.features?.maxFreeTemplates) || null;
-      
+
       if (maxFreeTemplates !== null && maxFreeTemplates >= 0 && activeResumeCount >= maxFreeTemplates) {
         return res.status(403).json({
           success: false,
@@ -624,7 +626,7 @@ const updateResume = asyncHandler(async (req, res) => {
   if (req.body.templateId && req.body.templateId !== resume.templateId.toString()) {
     const Template = require('../models/Template.model');
     updatedTemplate = await Template.findById(req.body.templateId);
-    
+
     if (!updatedTemplate || updatedTemplate.status !== 'Active') {
       return notFoundResponse(res, 'Template not found or inactive');
     }
@@ -728,8 +730,8 @@ const toggleResumePublic = asyncHandler(async (req, res) => {
   await resume.save();
 
   return successResponse(
-    res, 
-    { resume, isPublic: resume.isPublic }, 
+    res,
+    { resume, isPublic: resume.isPublic },
     `Resume is now ${resume.isPublic ? 'public' : 'private'}`
   );
 });
@@ -754,7 +756,7 @@ const duplicateResume = asyncHandler(async (req, res) => {
   // Get user and plan (plan already validated by ensureUserPlan middleware)
   const User = require('../models/User.model');
   const user = await User.findById(req.user._id);
-  
+
   if (!user) {
     return forbiddenResponse(res, 'User not found');
   }
@@ -772,7 +774,7 @@ const duplicateResume = asyncHandler(async (req, res) => {
   // CRITICAL: Validate template access and limits (prevents bypass via duplication)
   const Template = require('../models/Template.model');
   const template = await Template.findById(originalResume.templateId);
-  
+
   if (!template || template.status !== 'Active') {
     return notFoundResponse(res, 'Template not found or inactive');
   }
@@ -786,7 +788,7 @@ const duplicateResume = asyncHandler(async (req, res) => {
     template,
     templateId: originalResume.templateId
   });
-  
+
   // For duplicates, template is already in UserTemplateUsage collection (reuse)
   // Validation function will detect existing usage and allow without inserting duplicate
 
@@ -807,12 +809,12 @@ const duplicateResume = asyncHandler(async (req, res) => {
 
   // Create duplicate - clone all fields except system fields
   const resumeObj = originalResume.toObject();
-  
+
   // Extract fields we want to copy, explicitly excluding problematic fields
   const now = new Date();
   // Set planType based on template.isPremium (not from original resume)
   const planType = template.isPremium ? 'Premium' : 'Free';
-  
+
   const resumeData = {
     userId: resumeObj.userId,
     title: `${originalResume.title} (Copy)`,
@@ -846,7 +848,7 @@ const duplicateResume = asyncHandler(async (req, res) => {
   // This prevents publicUrl fields from being set to null (which violates unique sparse index)
   const insertResult = await Resume.collection.insertOne(resumeData);
   const duplicatedResume = await Resume.findById(insertResult.insertedId);
-  
+
   if (!duplicatedResume) {
     return res.status(500).json({
       success: false,
@@ -855,7 +857,7 @@ const duplicateResume = asyncHandler(async (req, res) => {
       errors: []
     });
   }
-  
+
   await duplicatedResume.populate('templateId', 'name categoryId templateHtml displayName thumbnailImage thumbnail');
   await duplicatedResume.populate('templateId.categoryId', 'name');
 
@@ -896,11 +898,11 @@ const downloadResumePDF = asyncHandler(async (req, res) => {
   // TODO: Generate PDF using PDFKit
   // For now, return success message
   return successResponse(
-    res, 
-    { 
+    res,
+    {
       message: 'PDF generation in progress',
-      resumeId: resume._id 
-    }, 
+      resumeId: resume._id
+    },
     'Resume PDF will be downloaded'
   );
 });
@@ -944,6 +946,149 @@ const getResumeStats = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Run ATS scan for a resume (JSON-based analysis)
+ * @route   POST /api/v1/resumes/:id/ats-scan
+ * @access  Private
+ */
+const scanResumeATS = asyncHandler(async (req, res) => {
+  const mongoose = require('mongoose');
+  const { id } = req.params;
+  const { jobDescription } = req.method === 'GET' ? req.query : req.body || {};
+
+  console.log("ATS Scan ID:", id); // Added console logging for the scan ID
+
+  // Validate ObjectId before querying MongoDB
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    console.error('❌ ATS Scan: Invalid ObjectId format:', id);
+    return res.status(400).json({
+      success: false,
+      statusCode: 400,
+      message: 'Invalid resume ID format',
+      errorCode: 'INVALID_RESUME_ID',
+      errors: []
+    });
+  }
+
+  // Debug logging to help diagnose templateId vs resumeId issues
+  console.log('🔍 ATS Scan Request:', {
+    id: id,
+    userId: req.user?._id?.toString(),
+    isValidObjectId: mongoose.Types.ObjectId.isValid(id)
+  });
+
+  const resume = await Resume.findById(id);
+
+  if (!resume) {
+    console.error('❌ ATS Scan Failed: Resume not found for ID:', id, '- This may indicate frontend is sending templateId instead of resumeId');
+    return res.status(404).json({
+      success: false,
+      statusCode: 404,
+      message: 'Resume not found. Ensure you are sending a resumeId (not templateId). Create a resume first before running ATS scan.',
+      errorCode: 'RESUME_NOT_FOUND',
+      errors: []
+    });
+  }
+
+  // Ownership check – ATS scan is only available to the resume owner
+  if (resume.userId.toString() !== req.user._id.toString()) {
+    return forbiddenResponse(res, 'You do not have permission to scan this resume');
+  }
+
+  // Core ATS analysis (synchronous, JSON-only)
+  const analysis = analyzeResumeForATS({
+    resume,
+    jobDescription: jobDescription || ''
+  });
+
+  // Persist history so we can show improvements later
+  try {
+    resume.atsHistory = resume.atsHistory || [];
+    resume.atsHistory.push({
+      score: analysis.score,
+      keywordMatch: analysis.keywordMatch?.matchPercentage || 0,
+      createdAt: new Date()
+    });
+    await resume.save();
+  } catch (err) {
+    // Non-fatal – ATS should still return a response
+    console.warn('⚠ Failed to append ATS history for resume', id, err.message);
+  }
+
+  // AI-style feedback; failure should not break the endpoint
+  let aiFeedback = null;
+  try {
+    aiFeedback = await generateAtsSummary({
+      resumeJson: resume.toObject(),
+      jobDescription: jobDescription || '',
+      metrics: analysis
+    });
+    // Standard structured response for ATS scan
+    console.log("ATS Scan ID:", id);
+
+    return res.status(200).json({
+      success: true,
+      atsScore: analysis.score,
+      keywordMatch: analysis.keywordMatch?.matchPercentage || 0,
+      missingKeywords: analysis.keywordMatch?.missingKeywords || [],
+      strengths: aiFeedback?.strengths || [],
+      suggestions: aiFeedback?.improvements || []
+    });
+  } catch (err) {
+    console.error('❌ Failed to generate AI feedback for ATS scan', id, err);
+    // If AI feedback fails, still return the core ATS analysis
+    return res.status(200).json({
+      success: true,
+      atsScore: analysis.score,
+      keywordMatch: analysis.keywordMatch?.matchPercentage || 0,
+      missingKeywords: analysis.keywordMatch?.missingKeywords || [],
+      strengths: [],
+      suggestions: []
+    });
+  }
+});
+
+/**
+ * @desc    Generate AI-powered improvement suggestions (non-mutating)
+ * @route   POST /api/v1/resumes/:id/ats-improve
+ * @access  Private
+ */
+const improveResumeATS = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { jobDescription } = req.body || {};
+
+  const resume = await Resume.findById(id);
+
+  if (!resume) {
+    return notFoundResponse(res, 'Resume not found');
+  }
+
+  if (resume.userId.toString() !== req.user._id.toString()) {
+    return forbiddenResponse(res, 'You do not have permission to improve this resume');
+  }
+
+  try {
+    const suggestions = await generateAtsImprovements({
+      resumeJson: resume.toObject(),
+      jobDescription: jobDescription || ''
+    });
+
+    return successResponse(
+      res,
+      suggestions,
+      'ATS improvement suggestions generated successfully'
+    );
+  } catch (err) {
+    console.error('❌ Failed to generate ATS improvements for resume', id, err);
+    return res.status(500).json({
+      success: false,
+      statusCode: 500,
+      message: 'Failed to generate ATS improvement suggestions. Please try again later.',
+      errors: []
+    });
+  }
+});
+
+/**
  * @desc    Update resume section
  * @route   PATCH /api/v1/resumes/:id/section/:section
  * @access  Private
@@ -963,7 +1108,7 @@ const updateResumeSection = asyncHandler(async (req, res) => {
 
   // Validate section
   const validSections = [
-    'personalInfo', 'summary', 'experience', 'education', 
+    'personalInfo', 'summary', 'experience', 'education',
     'skills', 'projects', 'certifications', 'achievements', 'interests'
   ];
 
@@ -976,8 +1121,8 @@ const updateResumeSection = asyncHandler(async (req, res) => {
   await resume.save();
 
   return successResponse(
-    res, 
-    { resume }, 
+    res,
+    { resume },
     `${section} section updated successfully`
   );
 });
@@ -1002,7 +1147,7 @@ const exportResumeUrl = asyncHandler(async (req, res) => {
   // Get user - plan is already validated and attached by ensureUserPlan middleware
   const User = require('../models/User.model');
   const user = await User.findById(req.user._id);
-  
+
   if (!user) {
     return forbiddenResponse(res, 'User not found');
   }
@@ -1026,7 +1171,7 @@ const exportResumeUrl = asyncHandler(async (req, res) => {
   // Get URL validity duration from plan or admin settings
   const AppSettings = require('../models/AppSettings.model');
   const premiumDaysSetting = await AppSettings.findOne({ key: 'resume_url_premium_days' });
-  
+
   // Use plan's resumeUrlValidityDays or default to 60 days for PRO
   const validityDays = plan.features.resumeUrlValidityDays || premiumDaysSetting?.value || 60;
   const expiresAt = new Date();
@@ -1104,5 +1249,7 @@ module.exports = {
   getResumeStats,
   updateResumeSection,
   exportResumeUrl,
-  getPublicResume
+  getPublicResume,
+  scanResumeATS,
+  improveResumeATS
 };

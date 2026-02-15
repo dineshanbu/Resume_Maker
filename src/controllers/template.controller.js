@@ -26,18 +26,6 @@ const getAllTemplates = asyncHandler(async (req, res) => {
     limit = 20
   } = req.query;
 
-  // Build query - Only active templates
-  const query = { status: 'Active' };
-
-  // Support categoryId filter
-  if (categoryId) {
-    query.categoryId = categoryId;
-  }
-
-  // Legacy support
-  if (profession) query.profession = profession;
-  if (styleCategory) query.styleCategory = styleCategory;
-
   // If user is authenticated, check their subscription
   let userTier = 'free';
   if (req.user) {
@@ -49,23 +37,60 @@ const getAllTemplates = asyncHandler(async (req, res) => {
     }
   }
 
-  // Filter by accessible tiers
+  // Build resilient query
   const tierHierarchy = {
     free: ['free'],
     basic: ['free', 'basic'],
     premium: ['free', 'basic', 'premium']
   };
 
-  if (subscriptionTier) {
-    query.subscriptionTier = subscriptionTier;
-  } else {
-    query.subscriptionTier = { $in: tierHierarchy[userTier] };
+  const accessHierarchy = {
+    free: ['FREE', 'BOTH'],
+    basic: ['FREE', 'BOTH'],
+    premium: ['FREE', 'PREMIUM', 'BOTH']
+  };
+
+  const statusFilter = {
+    $or: [
+      { status: 'Active' },
+      { isActive: true }
+    ]
+  };
+
+  const tierFilter = subscriptionTier
+    ? {
+      $or: [
+        { subscriptionTier: subscriptionTier.toLowerCase() },
+        { accessType: subscriptionTier.toUpperCase() }
+      ]
+    }
+    : {
+      $or: [
+        { subscriptionTier: { $in: tierHierarchy[userTier] } },
+        { accessType: { $in: accessHierarchy[userTier] } },
+        { subscriptionTier: { $exists: false }, accessType: { $exists: false } } // Fallback for old records
+      ]
+    };
+
+  const query = {
+    $and: [statusFilter, tierFilter]
+  };
+
+  // Support categoryId filter
+  if (categoryId) {
+    query.categoryId = categoryId;
   }
+
+  // Legacy support
+  if (profession) query.profession = profession;
+  if (styleCategory) query.styleCategory = styleCategory;
 
   const skip = (page - 1) * limit;
 
   const templates = await Template.find(query)
     .populate('categoryId', 'name status')
+    .populate('themeId')
+    .populate('adminLayoutId')
     .select('-htmlTemplate -cssTemplate -templateHtml') // Don't send full template in list
     .sort({ usageCount: -1, createdAt: -1 })
     .skip(skip)
@@ -75,10 +100,10 @@ const getAllTemplates = asyncHandler(async (req, res) => {
 
   // Get rating data for each template if user is authenticated
   let templatesWithRatings = templates.map(t => t.toObject());
-  
+
   if (req.user) {
     const templateIds = templates.map(t => t._id);
-    
+
     // Get user's ratings for these templates
     const userRatings = await TemplateRating.find({
       userId: req.user._id,
@@ -163,7 +188,10 @@ const getTemplatesByProfession = asyncHandler(async (req, res) => {
     }
   }
 
-  const templates = await Template.getByProfession(profession, userTier);
+  const templates = await Template.find({ profession, ...statusFilter, ...tierFilter })
+    .populate('themeId')
+    .populate('adminLayoutId')
+    .sort({ usageCount: -1 });
 
   return successResponse(res, {
     templates: templates.map(t => ({
@@ -183,9 +211,25 @@ const getTemplatesByProfession = asyncHandler(async (req, res) => {
  */
 const getTemplateById = asyncHandler(async (req, res) => {
   const template = await Template.findById(req.params.id)
-    .populate('categoryId', 'name status');
+    .populate('categoryId', 'name status')
+    .populate('themeId')
+    .populate('adminLayoutId')
+    .populate([
+      { path: 'sectionLayouts.header' },
+      { path: 'sectionLayouts.summary' },
+      { path: 'sectionLayouts.experience' },
+      { path: 'sectionLayouts.education' },
+      { path: 'sectionLayouts.skills' },
+      { path: 'sectionLayouts.projects' },
+      { path: 'sectionLayouts.certifications' },
+      { path: 'sectionLayouts.languages' },
+      { path: 'sectionLayouts.achievements' },
+      { path: 'sectionLayouts.interests' },
+      { path: 'sectionLayouts.references' }
+    ]);
 
-  if (!template || template.status !== 'Active') {
+  const isActiveTemplate = template && (template.status === 'Active' || template.isActive === true);
+  if (!isActiveTemplate) {
     return notFoundResponse(res, 'Template not found');
   }
 
@@ -203,14 +247,23 @@ const getTemplateById = asyncHandler(async (req, res) => {
       userTier = req.user.currentPlan?.toLowerCase() || 'free';
     }
 
-    // Check tier access
+    // Check tier access (resilient to both subscriptionTier and accessType)
     const tierHierarchy = {
       free: ['free'],
       basic: ['free', 'basic'],
       premium: ['free', 'basic', 'premium']
     };
 
-    canAccess = tierHierarchy[userTier].includes(template.subscriptionTier);
+    const accessHierarchy = {
+      free: ['FREE', 'BOTH'],
+      basic: ['FREE', 'BOTH'],
+      premium: ['FREE', 'PREMIUM', 'BOTH']
+    };
+
+    const hasTierAccess = tierHierarchy[userTier].includes(template.subscriptionTier);
+    const hasAccessTypeMatch = accessHierarchy[userTier].includes(template.accessType);
+
+    canAccess = hasTierAccess || hasAccessTypeMatch;
     fullTemplate = canAccess;
   }
 
@@ -275,7 +328,8 @@ const getTemplatePreview = asyncHandler(async (req, res) => {
   const template = await Template.findById(req.params.id)
     .populate('categoryId', 'name status');
 
-  if (!template || template.status !== 'Active') {
+  const isActiveTemplate = template && (template.status === 'Active' || template.isActive === true);
+  if (!isActiveTemplate) {
     return notFoundResponse(res, 'Template not found');
   }
 
@@ -295,7 +349,8 @@ const useTemplate = asyncHandler(async (req, res) => {
   const template = await Template.findById(req.params.id)
     .populate('categoryId', 'name status');
 
-  if (!template || template.status !== 'Active') {
+  const isActiveTemplate = template && (template.status === 'Active' || template.isActive === true);
+  if (!isActiveTemplate) {
     return notFoundResponse(res, 'Template not found');
   }
 
@@ -309,17 +364,26 @@ const useTemplate = asyncHandler(async (req, res) => {
     userTier = req.user.currentPlan?.toLowerCase() || 'free';
   }
 
-  // Verify tier access
+  // Verify tier access (resilient to both subscriptionTier and accessType)
   const tierHierarchy = {
     free: ['free'],
     basic: ['free', 'basic'],
     premium: ['free', 'basic', 'premium']
   };
 
-  if (!tierHierarchy[userTier].includes(template.subscriptionTier)) {
+  const accessHierarchy = {
+    free: ['FREE', 'BOTH'],
+    basic: ['FREE', 'BOTH'],
+    premium: ['FREE', 'PREMIUM', 'BOTH']
+  };
+
+  const hasTierAccess = tierHierarchy[userTier].includes(template.subscriptionTier);
+  const hasAccessTypeMatch = accessHierarchy[userTier].includes(template.accessType);
+
+  if (!hasTierAccess && !hasAccessTypeMatch) {
     return forbiddenResponse(
       res,
-      `This template requires ${template.subscriptionTier} subscription`
+      `This template requires ${template.subscriptionTier || template.accessType} subscription`
     );
   }
 
@@ -328,15 +392,8 @@ const useTemplate = asyncHandler(async (req, res) => {
 
   return successResponse(res, {
     template: {
-      _id: template._id,
-      name: template.name,
-      categoryId: template.categoryId,
-      templateHtml: template.templateHtml || template.htmlTemplate,
-      htmlTemplate: template.htmlTemplate,
-      cssTemplate: template.cssTemplate,
-      availableSections: template.availableSections,
-      customFields: template.customFields,
-      colorScheme: template.colorScheme
+      ...template.toObject(),
+      templateHtml: template.templateHtml || template.htmlTemplate, // Backward compatibility
     }
   }, 'Template loaded successfully');
 });
@@ -375,10 +432,10 @@ const updateTemplate = asyncHandler(async (req, res) => {
   // Ensure isPremium is properly set based on payload
   // If isPremium is provided, use it; otherwise keep existing value
   const updateData = { ...req.body };
-  
+
   if ('isPremium' in req.body) {
     updateData.isPremium = req.body.isPremium === true || req.body.isPremium === 'true' || req.body.isPremium === 1;
-    
+
     // Sync subscriptionTier with isPremium for backward compatibility
     if (updateData.isPremium) {
       updateData.subscriptionTier = 'premium';
@@ -448,17 +505,31 @@ const rateTemplate = asyncHandler(async (req, res) => {
  * Helper function to generate preview HTML
  */
 const generatePreviewHTML = (template) => {
-  const previewData = template.previewData || {
-    personalInfo: {
-      fullName: 'John Doe',
-      email: 'john@example.com',
-      phone: '1234567890'
-    },
-    summary: 'Professional summary goes here...'
+  // Use layoutHtml from config if available (new builder), otherwise fallback to templateHtml/htmlTemplate
+  let html = '';
+  if (template.config && template.config.layoutHtml) {
+    html = template.config.layoutHtml;
+  } else {
+    html = template.templateHtml || template.htmlTemplate || '';
+  }
+
+  // Define a comprehensive sample data for preview if missing
+  const defaultPreviewData = {
+    fullName: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '+1 (555) 000-0000',
+    location: 'New York, NY',
+    profileSummary: 'Experienced professional with a proven track record of success in project management and team leadership. Skilled in strategic planning, process optimization, and delivering high-quality results in fast-paced environments.',
+    skills: ['Project Management', 'Team Leadership', 'Strategic Planning', 'Process Optimization', 'Communication'],
+    experience: '<strong>Senior Manager</strong> at ABC Corp (2018 - Present)<br>Led a team of 10+ people and increased revenue by 20%.',
+    education: '<strong>MBA</strong> from University Specializing in Business (2016)',
+    sections: {
+      left: '<div class="section"><h3>Skills</h3><ul><li>Project Management</li><li>Team Leadership</li></ul></div>',
+      right: '<div class="section"><h3>Experience</h3><p>Senior Manager at ABC Corp...</p></div>'
+    }
   };
 
-  // Use templateHtml if available, otherwise fallback to htmlTemplate
-  let html = template.templateHtml || template.htmlTemplate || '';
+  const previewData = template.previewData || defaultPreviewData;
 
   // Replace placeholders with preview data
   Object.keys(previewData).forEach(key => {
