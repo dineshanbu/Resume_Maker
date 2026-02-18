@@ -61,14 +61,14 @@ const getAllTemplates = asyncHandler(async (req, res) => {
     ? {
       $or: [
         { subscriptionTier: subscriptionTier.toLowerCase() },
-        { accessType: subscriptionTier.toUpperCase() }
+ 
       ]
     }
     : {
       $or: [
         { subscriptionTier: { $in: tierHierarchy[userTier] } },
-        { accessType: { $in: accessHierarchy[userTier] } },
-        { subscriptionTier: { $exists: false }, accessType: { $exists: false } } // Fallback for old records
+ 
+        { subscriptionTier: { $exists: false } } // Fallback for old records
       ]
     };
 
