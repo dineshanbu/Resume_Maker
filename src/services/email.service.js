@@ -5,34 +5,32 @@ const nodemailer = require('nodemailer');
  * Create email transporter
  */
 const createTransporter = () => {
-  // Use Gmail SMTP if credentials are provided, otherwise use env vars
   const emailUser = process.env.EMAIL_USER || 'donh51561@gmail.com';
   const emailPass = process.env.EMAIL_PASSWORD || 'oehvtlgnlkhtjsth';
   const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const emailPort = process.env.EMAIL_PORT || 587;
+  // Use 465 for SSL or 587 for TLS
+  const emailPort = parseInt(process.env.EMAIL_PORT) || 465; 
 
   const config = {
+    host: emailHost,
+    port: emailPort,
+    secure: emailPort === 465, // Must be true for 465, false for 587
     auth: {
       user: emailUser,
       pass: emailPass
     },
+    // Adding pool: true can help with performance on Render
+    pool: true, 
+    maxConnections: 3,
     tls: {
-      rejectUnauthorized: false
+      // Helps bypass common certificate issues on cloud servers
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2'
     },
-    // Add timeouts to prevent hanging
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    connectionTimeout: 20000, // Increased to 20s for slow cold starts
+    greetingTimeout: 20000,
+    socketTimeout: 20000
   };
-
-  // If it's Gmail, use the service shortcut which is more reliable
-  if (emailHost.includes('gmail.com') || emailUser.endsWith('@gmail.com')) {
-    config.service = 'gmail';
-  } else {
-    config.host = emailHost;
-    config.port = parseInt(emailPort);
-    config.secure = parseInt(emailPort) === 465;
-  }
 
   return nodemailer.createTransport(config);
 };
