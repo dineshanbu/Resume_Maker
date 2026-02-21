@@ -7,27 +7,34 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
   // Use Gmail SMTP if credentials are provided, otherwise use env vars
   const emailUser = process.env.EMAIL_USER || 'donh51561@gmail.com';
-  const emailPass = process.env.EMAIL_PASSWORD || 'Passwort1217!';
+  const emailPass = process.env.EMAIL_PASSWORD || 'oehvtlgnlkhtjsth';
   const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
   const emailPort = process.env.EMAIL_PORT || 587;
 
-  // Gmail requires App Password if 2FA is enabled
-  // If using regular password, ensure "Less secure app access" is enabled (deprecated by Google)
-  // Recommended: Use App Password (16 characters, no spaces)
-
-  return nodemailer.createTransport({
-    host: emailHost,
-    port: parseInt(emailPort),
-    secure: false, // true for 465, false for other ports
+  const config = {
     auth: {
       user: emailUser,
       pass: emailPass
     },
     tls: {
-      // Do not fail on invalid certificates
       rejectUnauthorized: false
-    }
-  });
+    },
+    // Add timeouts to prevent hanging
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000
+  };
+
+  // If it's Gmail, use the service shortcut which is more reliable
+  if (emailHost.includes('gmail.com') || emailUser.endsWith('@gmail.com')) {
+    config.service = 'gmail';
+  } else {
+    config.host = emailHost;
+    config.port = parseInt(emailPort);
+    config.secure = parseInt(emailPort) === 465;
+  }
+
+  return nodemailer.createTransport(config);
 };
 
 /**

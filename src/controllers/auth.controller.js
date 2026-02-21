@@ -153,29 +153,18 @@ const signup = asyncHandler(async (req, res) => {
   const otp = await OTP.createOTP(user._id, user.email, 1); // 1 minute expiry
   console.log('✓ OTP generated:', otp.otpCode, 'for email:', user.email);
 
-  try {
-    console.log('📤 Sending OTP email to:', user.email);
-    await sendOTPEmail(user, otp.otpCode, 1);
-    console.log('✓ OTP email sent successfully to:', user.email);
-  } catch (emailError) {
-    console.error('✗ CRITICAL ERROR: Failed to send OTP email to:', user.email);
+  // Send OTP email (non-blocking to prevent UI hang)
+  console.log('📤 Triggering OTP email (non-blocking) for:', user.email);
+  sendOTPEmail(user, otp.otpCode, 1).catch(emailError => {
+    console.error('✗ CRITICAL ERROR: Failed to send OTP email in background to:', user.email);
     console.error('Error message:', emailError.message);
-    console.error('Error stack:', emailError.stack);
 
-    // Check if it's an authentication error
     if (emailError.message && emailError.message.includes('EAUTH')) {
       console.error('\n⚠ SMTP AUTHENTICATION ERROR DETECTED!');
       console.error('The email service credentials are incorrect or require App Password.');
-      console.error('Please check your EMAIL_USER and EMAIL_PASSWORD environment variables.\n');
     }
-
-    // In development, still return success with OTP in response
-    // In production, you might want to fail signup if email fails
-    if (process.env.NODE_ENV === 'production') {
-      // In production, log but continue (don't block signup)
-      console.warn('⚠ Continuing with signup despite email failure (production mode)');
-    }
-  }
+  });
+  console.log('✓ Signup flow continuing while email sends in background');
 
   // Return success without tokens (user must verify email first)
   return successResponse(res, {
@@ -666,30 +655,24 @@ const sendOTP = asyncHandler(async (req, res) => {
   const otp = await OTP.createOTP(user._id, user.email, 1); // 1 minute expiry
   console.log('✓ OTP generated:', otp.otpCode, 'for email:', user.email);
 
-  try {
-    console.log('📤 Sending OTP email to:', user.email);
-    await sendOTPEmail(user, otp.otpCode, 1);
-    console.log('✓ OTP email sent successfully to:', user.email);
-    return successResponse(res, {
-      message: 'OTP sent to your email',
-      email: user.email,
-      // For development: include OTP in response (REMOVE IN PRODUCTION)
-      ...(process.env.NODE_ENV !== 'production' && { otpCode: otp.otpCode })
-    }, 'OTP sent successfully');
-  } catch (emailError) {
-    console.error('✗ CRITICAL ERROR: Failed to send OTP email to:', user.email);
+  // Send OTP email (non-blocking)
+  console.log('📤 Resending OTP email (non-blocking) to:', user.email);
+  sendOTPEmail(user, otp.otpCode, 1).catch(emailError => {
+    console.error('✗ CRITICAL ERROR: Failed to resend OTP email to:', user.email);
     console.error('Error message:', emailError.message);
-    console.error('Error stack:', emailError.stack);
 
-    // Check if it's an authentication error
     if (emailError.message && emailError.message.includes('EAUTH')) {
       console.error('\n⚠ SMTP AUTHENTICATION ERROR DETECTED!');
       console.error('The email service credentials are incorrect or require App Password.');
-      console.error('Please check your EMAIL_USER and EMAIL_PASSWORD environment variables.\n');
     }
+  });
 
-    return errorResponse(res, `Failed to send OTP email: ${emailError.message}. Please check email service configuration.`, 500);
-  }
+  return successResponse(res, {
+    message: 'OTP sent to your email',
+    email: user.email,
+    // For development: include OTP in response (REMOVE IN PRODUCTION)
+    ...(process.env.NODE_ENV !== 'production' && { otpCode: otp.otpCode })
+  }, 'OTP sent successfully');
 });
 
 /**
