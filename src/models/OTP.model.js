@@ -20,7 +20,7 @@ const otpSchema = new mongoose.Schema({
     required: [true, 'OTP code is required'],
     trim: true,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^\d{6}$/.test(v);
       },
       message: 'OTP must be exactly 6 digits'
@@ -51,22 +51,21 @@ const otpSchema = new mongoose.Schema({
 // Index for faster queries
 otpSchema.index({ email: 1, isUsed: 1 });
 otpSchema.index({ userId: 1, isUsed: 1 });
-otpSchema.index({ expiresAt: 1 });
 
 // Method to check if OTP is valid
-otpSchema.methods.isValid = function() {
+otpSchema.methods.isValid = function () {
   return !this.isUsed && this.expiresAt > new Date();
 };
 
 // Static method to generate 6-digit OTP
-otpSchema.statics.generateOTP = function() {
+otpSchema.statics.generateOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   console.log('🔢 Generated OTP:', otp, 'Type:', typeof otp, 'Length:', otp.length);
   return otp;
 };
 
 // Static method to create OTP with expiry (default 1 minute)
-otpSchema.statics.createOTP = async function(userId, email, expiryMinutes = 1) {
+otpSchema.statics.createOTP = async function (userId, email, expiryMinutes = 1) {
   // Invalidate all previous unused OTPs for this user/email
   await this.updateMany(
     { userId, email, isUsed: false },
@@ -103,17 +102,17 @@ otpSchema.statics.createOTP = async function(userId, email, expiryMinutes = 1) {
 };
 
 // Static method to verify OTP
-otpSchema.statics.verifyOTP = async function(email, otpCode) {
+otpSchema.statics.verifyOTP = async function (email, otpCode) {
   // Normalize inputs
   const normalizedEmail = email.toLowerCase().trim();
   const normalizedOtp = String(otpCode).trim();
-  
+
   console.log('🔍 Verifying OTP:', {
     email: normalizedEmail,
     otpCode: normalizedOtp,
     otpCodeLength: normalizedOtp.length
   });
-  
+
   // Find OTP - check both used and unused to provide better error messages
   const otp = await this.findOne({
     email: normalizedEmail,

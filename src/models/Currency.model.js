@@ -24,7 +24,6 @@ const currencySchema = new mongoose.Schema({
 });
 
 // Indexes
-currencySchema.index({ code: 1 });
 currencySchema.index({ status: 1 });
 
 const Currency = mongoose.model('Currency', currencySchema);

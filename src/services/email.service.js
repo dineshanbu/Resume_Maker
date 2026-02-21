@@ -8,28 +8,35 @@ const createTransporter = () => {
   const emailUser = process.env.EMAIL_USER || 'donh51561@gmail.com';
   const emailPass = process.env.EMAIL_PASSWORD || 'oehvtlgnlkhtjsth';
   const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  // Use 465 for SSL or 587 for TLS
-  const emailPort = parseInt(process.env.EMAIL_PORT) || 465; 
+  const emailPort = 465; // Forcing 465 for production SSL stability
+
+  console.log('🔌 Attempting email connection to:', {
+    host: emailHost,
+    port: emailPort,
+    user: emailUser,
+    secure: true
+  });
 
   const config = {
     host: emailHost,
     port: emailPort,
-    secure: emailPort === 465, // Must be true for 465, false for 587
+    secure: true, // SSL/TLS
     auth: {
       user: emailUser,
       pass: emailPass
     },
-    // Adding pool: true can help with performance on Render
-    pool: true, 
-    maxConnections: 3,
+    // Adding pool: true for better performance in background tasks
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
     tls: {
-      // Helps bypass common certificate issues on cloud servers
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2'
     },
-    connectionTimeout: 20000, // Increased to 20s for slow cold starts
-    greetingTimeout: 20000,
-    socketTimeout: 20000
+    // High timeouts for cold cloud connections
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000
   };
 
   return nodemailer.createTransport(config);

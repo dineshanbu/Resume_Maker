@@ -80,11 +80,10 @@ const planSchema = new mongoose.Schema({
 });
 
 // Indexes
-planSchema.index({ name: 1 });
 planSchema.index({ isActive: 1 });
 
 // Prevent deletion of default plans
-planSchema.pre('remove', function(next) {
+planSchema.pre('remove', function (next) {
   if (this.name === 'FREE' || this.name === 'PRO') {
     return next(new Error('Cannot delete default plans (FREE or PRO)'));
   }

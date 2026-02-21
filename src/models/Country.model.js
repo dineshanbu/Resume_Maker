@@ -25,7 +25,6 @@ const countrySchema = new mongoose.Schema({
 });
 
 // Indexes
-countrySchema.index({ code: 1 });
 countrySchema.index({ status: 1 });
 
 const Country = mongoose.model('Country', countrySchema);

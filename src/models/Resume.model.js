@@ -20,13 +20,13 @@ const resumeSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  
+
   // Resume data as JSON (for flexible storage)
   resumeData: {
     type: mongoose.Schema.Types.Mixed,
     required: false
   },
-  
+
   // Resume status
   status: {
     type: String,
@@ -34,7 +34,7 @@ const resumeSchema = new mongoose.Schema({
     default: 'Draft',
     index: true
   },
-  
+
   // Completion percentage (0-100)
   completionPercentage: {
     type: Number,
@@ -42,7 +42,7 @@ const resumeSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
-  
+
   // Personal Information (optional - data stored in resumeData for flexibility)
   personalInfo: {
     fullName: { type: String, required: false },
@@ -95,9 +95,9 @@ const resumeSchema = new mongoose.Schema({
     soft: [String],
     languages: [{
       language: String,
-      proficiency: { 
-        type: String, 
-        enum: ['Beginner', 'Intermediate', 'Advanced', 'Native'] 
+      proficiency: {
+        type: String,
+        enum: ['Beginner', 'Intermediate', 'Advanced', 'Native']
       }
     }]
   },
@@ -171,7 +171,7 @@ const resumeSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  
+
   // Plan and URL Export Fields
   planType: {
     type: String,
@@ -204,31 +204,28 @@ const resumeSchema = new mongoose.Schema({
 // Indexes for better query performance
 resumeSchema.index({ userId: 1, createdAt: -1 });
 resumeSchema.index({ userId: 1, status: 1 });
-resumeSchema.index({ templateId: 1 });
 resumeSchema.index({ 'personalInfo.email': 1 });
 resumeSchema.index({ isPublic: 1 });
-resumeSchema.index({ publicUrlToken: 1 });
-resumeSchema.index({ urlExpiresAt: 1 });
 
 // Update lastModified on save
-resumeSchema.pre('save', function(next) {
+resumeSchema.pre('save', function (next) {
   this.lastModified = Date.now();
   next();
 });
 
 // Virtual for years of experience
-resumeSchema.virtual('totalExperience').get(function() {
+resumeSchema.virtual('totalExperience').get(function () {
   if (!this.experience || this.experience.length === 0) return 0;
-  
+
   let totalMonths = 0;
   this.experience.forEach(exp => {
     const start = new Date(exp.startDate);
     const end = exp.isCurrentJob ? new Date() : new Date(exp.endDate);
-    const months = (end.getFullYear() - start.getFullYear()) * 12 + 
-                   (end.getMonth() - start.getMonth());
+    const months = (end.getFullYear() - start.getFullYear()) * 12 +
+      (end.getMonth() - start.getMonth());
     totalMonths += months;
   });
-  
+
   return (totalMonths / 12).toFixed(1);
 });
 
