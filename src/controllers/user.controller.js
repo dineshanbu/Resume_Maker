@@ -1,12 +1,13 @@
 // backend/src/controllers/user.controller.js
+const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const Resume = require('../models/Resume.model');
 const Application = require('../models/Application.model');
 const asyncHandler = require('../utils/asyncHandler');
-const { 
-  successResponse, 
+const {
+  successResponse,
   notFoundResponse,
-  badRequestResponse 
+  badRequestResponse
 } = require('../utils/apiResponse');
 
 /**
@@ -83,33 +84,87 @@ const updatePreferences = asyncHandler(async (req, res) => {
   await user.save();
 
   return successResponse(
-    res, 
-    { preferences: user.preferences }, 
+    res,
+    { preferences: user.preferences },
     'Preferences updated successfully'
   );
 });
 
 /**
  * @desc    Get user dashboard stats
- * @route   GET /api/v1/users/dashboard
+ * @route   GET /api/v1/users/dashboard/stats
  * @access  Private
  */
 const getDashboardStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
+  const Job = require('../models/Job.model');
 
-  // Get resume count
-  const resumeCount = await Resume.countDocuments({ userId });
+  // Fetch user for profile completion
+  const user = await User.findById(userId);
 
-  // Get application statistics
-  const applications = await Application.aggregate([
-    { $match: { applicantId: userId } },
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 }
+  // Run all queries in parallel for performance
+  const [
+    totalResumes,
+    completedResumes,
+    draftResumes,
+    resumeCompletionAgg,
+    applicationAgg,
+    activeJobsCount,
+    recentResumes,
+    recentApplications
+  ] = await Promise.all([
+    // Total resumes created by user
+    Resume.countDocuments({ userId }),
+
+    // Completed resumes
+    Resume.countDocuments({ userId, status: 'Completed' }),
+
+    // Draft resumes
+    Resume.countDocuments({ userId, status: 'Draft' }),
+
+    // Average completion percentage across all resumes
+    Resume.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: null,
+          avgCompletion: { $avg: '$completionPercentage' }
+        }
       }
-    }
+    ]),
+
+    // Application statistics grouped by status
+    Application.aggregate([
+      { $match: { applicantId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]),
+
+    // Active jobs count (jobs that are currently Active)
+    Job.countDocuments({ status: 'Active' }),
+
+    // Recent resumes (last 5)
+    Resume.find({ userId })
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .select('title status completionPercentage updatedAt templateId')
+      .populate('templateId', 'name'),
+
+    // Recent applications (last 5)
+    Application.find({ applicantId: userId })
+      .populate('jobId', 'title company location')
+      .sort({ createdAt: -1 })
+      .limit(5)
   ]);
+
+  // Average completion percentage
+  const avgCompletionPercentage = resumeCompletionAgg.length > 0
+    ? Math.round(resumeCompletionAgg[0].avgCompletion || 0)
+    : 0;
 
   // Format application stats
   const applicationStats = {
@@ -119,13 +174,15 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     shortlisted: 0,
     interviewed: 0,
     offered: 0,
-    rejected: 0
+    accepted: 0,
+    rejected: 0,
+    withdrawn: 0
   };
 
-  applications.forEach(stat => {
+  applicationAgg.forEach(stat => {
     applicationStats.total += stat.count;
-    
-    switch(stat._id) {
+
+    switch (stat._id) {
       case 'Applied':
         applicationStats.applied = stat.count;
         break;
@@ -135,27 +192,35 @@ const getDashboardStats = asyncHandler(async (req, res) => {
       case 'Shortlisted':
         applicationStats.shortlisted = stat.count;
         break;
+      case 'Interview Scheduled':
       case 'Interviewed':
-        applicationStats.interviewed = stat.count;
+        applicationStats.interviewed += stat.count;
         break;
       case 'Offered':
         applicationStats.offered = stat.count;
         break;
+      case 'Accepted':
+        applicationStats.accepted = stat.count;
+        break;
       case 'Rejected':
         applicationStats.rejected = stat.count;
+        break;
+      case 'Withdrawn':
+        applicationStats.withdrawn = stat.count;
         break;
     }
   });
 
-  // Get recent applications
-  const recentApplications = await Application.find({ applicantId: userId })
-    .populate('jobId', 'title company location')
-    .sort({ createdAt: -1 })
-    .limit(5);
-
   const stats = {
-    resumeCount,
+    resumesCreated: totalResumes,
+    completedResumes,
+    draftResumes,
+    avgCompletionPercentage,
+    jobsApplied: applicationStats.total,
+    activeJobsCount,
+    profileCompletionPercentage: user ? (user.profileCompletionPercentage || 0) : 0,
     applicationStats,
+    recentResumes,
     recentApplications
   };
 
@@ -172,8 +237,8 @@ const getUserResumes = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
 
   return successResponse(
-    res, 
-    { resumes, count: resumes.length }, 
+    res,
+    { resumes, count: resumes.length },
     'Resumes retrieved successfully'
   );
 });
@@ -248,15 +313,15 @@ const uploadProfilePicture = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findById(req.user._id);
-  
+
   // TODO: Upload to cloud storage (Cloudinary)
   // For now, just store the file path
   user.profilePicture = `/uploads/${req.file.filename}`;
   await user.save();
 
   return successResponse(
-    res, 
-    { profilePicture: user.profilePicture }, 
+    res,
+    { profilePicture: user.profilePicture },
     'Profile picture uploaded successfully'
   );
 });
