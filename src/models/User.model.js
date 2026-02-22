@@ -107,9 +107,14 @@ const userSchema = new mongoose.Schema({
     ref: 'Plan',
     default: null
   },
+  subscriptionPlan: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan',
+    default: null
+  },
   planName: {
     type: String,
-    enum: ['FREE', 'PRO'],
+    enum: ['FREE', 'PRO', 'PREMIUM'],
     default: 'FREE'
   },
   subscriptionType: {
@@ -119,10 +124,18 @@ const userSchema = new mongoose.Schema({
   },
   subscriptionStatus: {
     type: String,
-    enum: ['ACTIVE', 'EXPIRED'],
-    default: 'ACTIVE'
+    enum: ['ACTIVE', 'EXPIRED', 'free', 'premium'],
+    default: 'free'
+  },
+  resumesCreated: {
+    type: Number,
+    default: 0
   },
   planStartDate: {
+    type: Date,
+    default: Date.now
+  },
+  subscriptionStartDate: {
     type: Date,
     default: Date.now
   },
@@ -130,6 +143,15 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null // NULL for FREE plan
   },
+  subscriptionEndDate: {
+    type: Date,
+    default: null
+  },
+
+  // Razorpay Integration
+  razorpayCustomerId: String,
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
 
   // Reset password
   resetPasswordToken: String,
@@ -390,15 +412,20 @@ userSchema.statics.findOrCreateFromGoogle = async function (profile) {
 
 // Check if user can access feature based on subscription
 userSchema.methods.canAccessFeature = async function (featureName) {
-  const UserSubscription = mongoose.model('UserSubscription');
-  const subscription = await UserSubscription.findOne({ userId: this._id });
+  try {
+    const UserSubscription = mongoose.model('UserSubscription');
+    const subscription = await UserSubscription.findOne({ userId: this._id });
 
-  if (!subscription || !subscription.isActive()) {
-    // Free plan limitations
+    if (!subscription || !subscription.isActive()) {
+      // Free plan limitations
+      return false;
+    }
+
+    return await subscription.hasFeature(featureName);
+  } catch (error) {
+    // If UserSubscription model doesn't exist yet or other error, fallback to free
     return false;
   }
-
-  return await subscription.hasFeature(featureName);
 };
 
 /**

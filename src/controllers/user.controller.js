@@ -28,6 +28,41 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Get current user profile
+ * @route   GET /api/v1/users/profile
+ * @access  Private
+ */
+const getMyProfile = asyncHandler(async (req, res) => {
+  // User is already attached to req by authenticate middleware
+  // But we want to ensure we have the latest data including subscription fields
+  const user = await User.findById(req.user._id).populate('subscriptionPlan');
+
+  if (!user) {
+    return notFoundResponse(res, 'User not found');
+  }
+
+  const userData = user.getPublicProfile();
+  const plan = user.subscriptionPlan;
+
+  // Robust resume limit detection
+  let resumeLimit = 3; // Default
+  if (plan) {
+    resumeLimit = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0) || (plan.name === 'PRO' ? -1 : 3);
+  }
+
+  // Fresh resume count for UI consistency
+  const resumesCreated = await Resume.countDocuments({ userId: user._id });
+
+  return successResponse(res, {
+    user: userData,
+    subscriptionStatus: user.subscriptionStatus,
+    resumeLimit,
+    resumesCreated,
+    subscriptionPlan: user.subscriptionPlan
+  });
+});
+
+/**
  * @desc    Update user profile
  * @route   PUT /api/v1/users/profile
  * @access  Private
@@ -99,8 +134,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const Job = require('../models/Job.model');
 
-  // Fetch user for profile completion
-  const user = await User.findById(userId);
+  // Fetch user for profile completion and plan details
+  const user = await User.findById(userId).populate('subscriptionPlan');
 
   // Run all queries in parallel for performance
   const [
@@ -211,6 +246,15 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     }
   });
 
+  // Robust resume limit detection
+  const plan = user?.subscriptionPlan;
+  let resumeLimit = 3;
+  if (plan) {
+    resumeLimit = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0) || (plan.name === 'PRO' ? -1 : 3);
+  } else if (user?.planName === 'PRO') {
+    resumeLimit = -1;
+  }
+
   const stats = {
     resumesCreated: totalResumes,
     completedResumes,
@@ -219,6 +263,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     jobsApplied: applicationStats.total,
     activeJobsCount,
     profileCompletionPercentage: user ? (user.profileCompletionPercentage || 0) : 0,
+    resumeLimit,
     applicationStats,
     recentResumes,
     recentApplications
@@ -328,6 +373,7 @@ const uploadProfilePicture = asyncHandler(async (req, res) => {
 
 module.exports = {
   getUserProfile,
+  getMyProfile,
   updateProfile,
   updatePreferences,
   getDashboardStats,

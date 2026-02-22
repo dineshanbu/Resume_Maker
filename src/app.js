@@ -19,6 +19,7 @@ const templateRoutes = require('./routes/template.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
 const adminRoutes = require('./routes/admin.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const paymentRoutes = require('./routes/payment.routes');
 // Import middlewares
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
 
@@ -178,6 +179,7 @@ app.use(`/api/${API_VERSION}/template-ratings`, require('./routes/templateRating
 app.use(`/api/${API_VERSION}/subscriptions`, subscriptionRoutes);
 app.use(`/api/${API_VERSION}/notifications`, notificationRoutes);
 app.use(`/api/${API_VERSION}/admin`, adminRoutes);
+app.use(`/api/${API_VERSION}/payment`, paymentRoutes);
 app.use(`/api/${API_VERSION}/user/config`, require('./routes/user-config.routes'));
 
 // Public resume route (outside API versioning)

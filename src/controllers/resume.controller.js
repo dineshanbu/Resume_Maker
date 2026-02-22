@@ -1,5 +1,6 @@
-// backend/src/controllers/resume.controller.js
 const Resume = require('../models/Resume.model');
+const User = require('../models/User.model');
+const Template = require('../models/Template.model');
 const asyncHandler = require('../utils/asyncHandler');
 const {
   successResponse,
@@ -50,9 +51,7 @@ async function validateAndTrackTemplateAccess({ userId, plan, template, template
   const UserTemplateUsage = require('../models/UserTemplateUsage.model');
 
   // Validate plan structure
-  if (!plan || !plan.features || typeof plan.features !== 'object') {
-    throw new Error('Invalid plan structure: plan.features is missing or invalid');
-  }
+  const features = plan.features || {};
 
   // Convert templateId to ObjectId for comparison
   const templateObjectId = typeof templateId === 'string'
@@ -69,7 +68,13 @@ async function validateAndTrackTemplateAccess({ userId, plan, template, template
       : new ObjectId(userId);
 
   // RULE 1: Premium Template Access Check (ALWAYS - regardless of status)
-  if (template.isPremium && plan.features?.premiumTemplatesAccess !== true) {
+  const premiumAccess = plan.features?.premiumTemplatesAccess === true ||
+    plan.templateAccess === 'premium' ||
+    plan.templateAccess === 'all' ||
+    plan.name === 'PRO' ||
+    plan.name === 'PREMIUM';
+
+  if (template.isPremium && !premiumAccess) {
     return {
       allowed: false,
       error: {
@@ -88,15 +93,13 @@ async function validateAndTrackTemplateAccess({ userId, plan, template, template
   // RULE 2: Free Template Limit Check (ALWAYS - regardless of status)
   // Uses UserTemplateUsage collection for authoritative tracking
   const isFreeTemplate = !template.isPremium;
-  const isFreePlan = plan.name === 'FREE' || plan.features?.premiumTemplatesAccess !== true;
-  const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true;
+  const isFreePlan = plan.name === 'FREE' || !premiumAccess;
+  const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true || plan.resumeLimit === -1;
 
   // Only validate if: FREE plan + free template + limits enabled
   if (isFreeTemplate && isFreePlan && !resumeCreateUnlimited) {
-    // Get limit from plan
-    const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number'
-      ? plan.features.maxFreeTemplates
-      : parseInt(plan.features?.maxFreeTemplates) || null;
+    // Get limit from plan (prefer top-level field from Admin UI)
+    const maxFreeTemplates = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0, plan.features?.maxFreeTemplates || 0) || 3;
 
     if (maxFreeTemplates !== null && maxFreeTemplates >= 0) {
       // STEP 1: Check if template already used (reuse case)
@@ -216,14 +219,12 @@ const createResume = asyncHandler(async (req, res) => {
   }
 
   // STEP 2: Verify template exists
-  const Template = require('../models/Template.model');
   const template = await Template.findById(templateId);
   if (!template || template.status !== 'Active') {
     return notFoundResponse(res, 'Template not found or inactive');
   }
 
   // STEP 3: Get user and plan (plan already validated by ensureUserPlan middleware)
-  const User = require('../models/User.model');
   // Fetch user from DB (template usage is tracked in UserTemplateUsage collection, not User document)
   const user = await User.findById(req.user._id);
 
@@ -231,28 +232,8 @@ const createResume = asyncHandler(async (req, res) => {
     return forbiddenResponse(res, 'User not found');
   }
 
-  // STEP 4: Validate plan from middleware
-  const plan = req.userPlan;
-  if (!plan) {
-    console.error('❌ CRITICAL: No plan found in request (middleware should have set req.userPlan)');
-    return res.status(500).json({
-      success: false,
-      statusCode: 500,
-      message: 'Plan configuration error. Please contact support.',
-      errors: []
-    });
-  }
-
-  // CRITICAL: Validate plan model structure
-  if (!plan.features || typeof plan.features !== 'object') {
-    console.error('❌ CRITICAL: Plan features object is missing or invalid:', plan);
-    return res.status(500).json({
-      success: false,
-      statusCode: 500,
-      message: 'Plan configuration error. Plan features are not properly configured.',
-      errors: []
-    });
-  }
+  // STEP 4: Get plan from middleware
+  const plan = req.userPlan || { name: 'FREE', features: {} };
 
   // Validate plan is active
   if (plan.isActive === false) {
@@ -299,7 +280,7 @@ const createResume = asyncHandler(async (req, res) => {
 
   // Only check ACTIVE resume count when creating as ACTIVE
   if (!isDraft && isActive) {
-    const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true;
+    const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true || plan.resumeLimit === -1;
 
     if (!resumeCreateUnlimited) {
       // Count user's ACTIVE resumes (status = 'Completed')
@@ -308,10 +289,8 @@ const createResume = asyncHandler(async (req, res) => {
         status: 'Completed'
       });
 
-      // Get limit from plan.features.maxFreeTemplates
-      const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number'
-        ? plan.features.maxFreeTemplates
-        : parseInt(plan.features?.maxFreeTemplates) || null;
+      // Robust resume limit detection
+      const maxFreeTemplates = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0) || (plan.name === 'PRO' ? -1 : 3);
 
       // Block if user already has maximum ACTIVE resumes
       if (maxFreeTemplates !== null && maxFreeTemplates >= 0 && activeResumeCount >= maxFreeTemplates) {
@@ -363,6 +342,9 @@ const createResume = asyncHandler(async (req, res) => {
     resume.completionPercentage = completionPercentage;
     await resume.save();
   }
+
+  // Increment user's resume count atomically
+  await User.findByIdAndUpdate(req.user._id, { $inc: { resumesCreated: 1 } });
 
   // Send resume creation email notification (async, non-blocking)
   setImmediate(async () => {
@@ -571,7 +553,7 @@ const updateResume = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   const plan = req.userPlan;
 
-  if (!plan || !plan.features || typeof plan.features !== 'object') {
+  if (!plan) {
     return res.status(500).json({
       success: false,
       statusCode: 500,
@@ -588,9 +570,8 @@ const updateResume = asyncHandler(async (req, res) => {
   const isChangingToDraft = (newStatus === 'Draft' || newStatus === 'DRAFT') &&
     (currentStatus === 'Completed' || currentStatus === 'ACTIVE' || currentStatus === 'Active');
 
-  // If changing to ACTIVE, check plan limits (skip if changing to DRAFT)
   if (isChangingToActive) {
-    const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true;
+    const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true || plan.resumeLimit === -1;
 
     if (!resumeCreateUnlimited) {
       // Count user's ACTIVE resumes (excluding current resume if it was already active)
@@ -600,10 +581,8 @@ const updateResume = asyncHandler(async (req, res) => {
         _id: { $ne: resume._id } // Exclude current resume from count
       });
 
-      // Get limit from plan.features.maxFreeTemplates
-      const maxFreeTemplates = typeof plan.features?.maxFreeTemplates === 'number'
-        ? plan.features.maxFreeTemplates
-        : parseInt(plan.features?.maxFreeTemplates) || null;
+      // Robust resume limit detection
+      const maxFreeTemplates = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0) || (plan.name === 'PRO' ? -1 : 3);
 
       if (maxFreeTemplates !== null && maxFreeTemplates >= 0 && activeResumeCount >= maxFreeTemplates) {
         return res.status(403).json({
@@ -624,7 +603,6 @@ const updateResume = asyncHandler(async (req, res) => {
   // If templateId is being updated, verify it exists and check template limits
   let updatedTemplate = null;
   if (req.body.templateId && req.body.templateId !== resume.templateId.toString()) {
-    const Template = require('../models/Template.model');
     updatedTemplate = await Template.findById(req.body.templateId);
 
     if (!updatedTemplate || updatedTemplate.status !== 'Active') {
@@ -706,6 +684,9 @@ const deleteResume = asyncHandler(async (req, res) => {
 
   await resume.deleteOne();
 
+  // Decrement user's resume count atomically
+  await User.findByIdAndUpdate(req.user._id, { $inc: { resumesCreated: -1 } });
+
   return successResponse(res, null, 'Resume deleted successfully');
 });
 
@@ -754,7 +735,6 @@ const duplicateResume = asyncHandler(async (req, res) => {
   }
 
   // Get user and plan (plan already validated by ensureUserPlan middleware)
-  const User = require('../models/User.model');
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -772,7 +752,6 @@ const duplicateResume = asyncHandler(async (req, res) => {
   }
 
   // CRITICAL: Validate template access and limits (prevents bypass via duplication)
-  const Template = require('../models/Template.model');
   const template = await Template.findById(originalResume.templateId);
 
   if (!template || template.status !== 'Active') {
@@ -804,8 +783,34 @@ const duplicateResume = asyncHandler(async (req, res) => {
   }
 
   // IMPORTANT: Duplicate resumes are ALWAYS created as DRAFT
-  // Skip plan limit checks since DRAFT resumes don't count toward limits
-  // Force status to DRAFT even if client tries to send ACTIVE
+  // However, they still count toward the total resume limit
+  const resumeCreateUnlimited = plan.features?.resumeCreateUnlimited === true || plan.resumeLimit === -1;
+
+  if (!resumeCreateUnlimited) {
+    // Count user's TOTAL resumes
+    const totalResumeCount = await Resume.countDocuments({
+      userId: user._id
+    });
+
+    // Robust resume limit detection
+    const maxResumesAllowed = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0) || (plan.name === 'PRO' ? -1 : 3);
+
+    // Block if user already has maximum resumes
+    if (maxResumesAllowed !== null && maxResumesAllowed >= 0 && totalResumeCount >= maxResumesAllowed) {
+      return res.status(403).json({
+        success: false,
+        statusCode: 403,
+        message: 'RESUME_LIMIT_REACHED',
+        errorCode: 'RESUME_LIMIT_REACHED',
+        data: {
+          allowed: maxResumesAllowed,
+          plan: plan.name || 'FREE',
+          upgradeMessage: `You have reached the maximum resume limit of ${maxResumesAllowed}. Upgrade to PRO to create unlimited resumes and unlock premium features.`
+        },
+        errors: []
+      });
+    }
+  }
 
   // Create duplicate - clone all fields except system fields
   const resumeObj = originalResume.toObject();
@@ -867,6 +872,9 @@ const duplicateResume = asyncHandler(async (req, res) => {
     resumeResponseObj.templateThumbnail = resumeResponseObj.templateId.thumbnailImage || resumeResponseObj.templateId.thumbnail || null;
     resumeResponseObj.templateName = resumeResponseObj.templateId.displayName || resumeResponseObj.templateId.name;
   }
+
+  // Increment user's resume count atomically
+  await User.findByIdAndUpdate(req.user._id, { $inc: { resumesCreated: 1 } });
 
   return createdResponse(res, { resume: resumeResponseObj }, 'Resume duplicated successfully');
 });

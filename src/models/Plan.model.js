@@ -5,7 +5,7 @@ const planSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Plan name is required'],
-    enum: ['FREE', 'PRO'],
+    enum: ['FREE', 'PREMIUM', 'PRO'],
     unique: true,
     trim: true
   },
@@ -15,61 +15,60 @@ const planSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  validity: {
+    type: Number, // In days
+    default: 30
+  },
+  validityUnit: {
+    type: String,
+    enum: ['days', 'month', 'year'],
+    default: 'month'
+  },
+  maxResumeDownloads: {
+    type: Number,
+    default: 0 // 0 means not allowed, -1 means unlimited
+  },
+  resumeLimit: {
+    type: Number,
+    default: 2 // -1 for unlimited
+  },
+  maxFreeTemplates: {
+    type: Number,
+    default: 0
+  },
+  templateAccess: {
+    type: String,
+    enum: ['free', 'premium', 'all'],
+    default: 'free'
+  },
+  featuresChecklist: [{
+    type: String
+  }],
+  features: {
+    resumeCreateUnlimited: { type: Boolean, default: false },
+    maxFreeTemplates: { type: Number, default: 3 },
+    premiumTemplatesAccess: { type: Boolean, default: false },
+    resumeExportPdf: { type: Boolean, default: true },
+    resumeExportHtml: { type: Boolean, default: false },
+    resumeDownloadLimit: { type: Number, default: 0 },
+    resumeShareUrl: { type: Boolean, default: true },
+    resumeUrlValidityDays: { type: Number, default: 1 },
+    autoApplyJobs: { type: Boolean, default: false },
+    resumeAnalytics: { type: Boolean, default: false }
+  },
   billingCycle: {
     type: String,
-    enum: ['monthly', 'yearly'],
+    enum: ['monthly', 'yearly', 'one-time'],
     default: 'monthly'
   },
   isActive: {
     type: Boolean,
     default: true
   },
-  maxResumesAllowed: {
-    type: Number,
-    default: null, // null means unlimited
-    min: 0
-  },
-  features: {
-    resumeCreateUnlimited: {
-      type: Boolean,
-      default: true
-    },
-    maxFreeTemplates: {
-      type: Number,
-      default: 5
-    },
-    premiumTemplatesAccess: {
-      type: Boolean,
-      default: false
-    },
-    resumeExportPdf: {
-      type: Boolean,
-      default: false
-    },
-    resumeExportHtml: {
-      type: Boolean,
-      default: false
-    },
-    resumeDownloadLimit: {
-      type: mongoose.Schema.Types.Mixed, // Can be number or 'unlimited'
-      default: 0
-    },
-    resumeShareUrl: {
-      type: Boolean,
-      default: false
-    },
-    resumeUrlValidityDays: {
-      type: Number,
-      default: 0
-    },
-    autoApplyJobs: {
-      type: Boolean,
-      default: false
-    },
-    resumeAnalytics: {
-      type: Boolean,
-      default: false
-    }
+  status: {
+    type: String,
+    enum: ['Active', 'Inactive'],
+    default: 'Active'
   },
   description: {
     type: String,
@@ -81,11 +80,12 @@ const planSchema = new mongoose.Schema({
 
 // Indexes
 planSchema.index({ isActive: 1 });
+planSchema.index({ status: 1 });
 
 // Prevent deletion of default plans
 planSchema.pre('remove', function (next) {
-  if (this.name === 'FREE' || this.name === 'PRO') {
-    return next(new Error('Cannot delete default plans (FREE or PRO)'));
+  if (this.name === 'FREE') {
+    return next(new Error('Cannot delete default FREE plan'));
   }
   next();
 });

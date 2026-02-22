@@ -1,4 +1,4 @@
-// backend/src/middlewares/planValidation.middleware.js
+const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const Plan = require('../models/Plan.model');
 const asyncHandler = require('../utils/asyncHandler');
@@ -9,7 +9,7 @@ const asyncHandler = require('../utils/asyncHandler');
  */
 async function getOrCreateFreePlan() {
   let freePlan = await Plan.findOne({ name: 'FREE', isActive: true });
-  
+
   if (!freePlan) {
     console.warn('⚠️ FREE plan not found in DB. Creating default FREE plan...');
     freePlan = await Plan.create({
@@ -17,10 +17,10 @@ async function getOrCreateFreePlan() {
       price: 0,
       billingCycle: 'monthly',
       isActive: true,
-      maxResumesAllowed: null, // Unlimited resumes for FREE
+      resumeLimit: 3, // Default: 3 resumes allowed
+      maxFreeTemplates: 3, // Default: 3 distinct free templates
       features: {
         resumeCreateUnlimited: false, // Enforce limits
-        maxFreeTemplates: 3, // Default: 3 distinct free templates
         premiumTemplatesAccess: false,
         resumeExportPdf: true,
         resumeExportHtml: false,
@@ -34,7 +34,7 @@ async function getOrCreateFreePlan() {
     });
     console.log('✓ Default FREE plan created');
   }
-  
+
   return freePlan;
 }
 
@@ -54,7 +54,7 @@ const ensureUserPlan = asyncHandler(async (req, res, next) => {
 
   const userId = req.user._id;
   let user = await User.findById(userId);
-  
+
   if (!user) {
     return next(); // User not found - let other middleware handle it
   }
@@ -65,45 +65,45 @@ const ensureUserPlan = asyncHandler(async (req, res, next) => {
   // STEP 1: Check if user has planId
   if (!user.planId) {
     console.log(`⚠️ User ${userId} missing planId. Assigning FREE plan...`);
-    
+
     // Get or create FREE plan
     const freePlan = await getOrCreateFreePlan();
-    
+
     // Assign FREE plan to user
     user.planId = freePlan._id;
     user.planName = 'FREE';
     user.currentPlan = 'Free';
     user.planStartDate = new Date();
     user.planExpiryDate = null; // FREE plan has no expiry
-    
+
     planUpdated = true;
     currentPlan = freePlan;
   } else {
     // STEP 2: Fetch plan from DB using planId
     currentPlan = await Plan.findById(user.planId);
-    
+
     // If plan not found by ID, fallback to planName
     if (!currentPlan && user.planName) {
       currentPlan = await Plan.findOne({ name: user.planName, isActive: true });
-      
+
       if (currentPlan) {
         // Update user.planId to match the found plan
         user.planId = currentPlan._id;
         planUpdated = true;
       }
     }
-    
+
     // If still not found, assign FREE plan
     if (!currentPlan) {
       console.warn(`⚠️ Plan not found for user ${userId} (planId: ${user.planId}). Assigning FREE plan...`);
-      
+
       const freePlan = await getOrCreateFreePlan();
       user.planId = freePlan._id;
       user.planName = 'FREE';
       user.currentPlan = 'Free';
       user.planStartDate = new Date();
       user.planExpiryDate = null;
-      
+
       planUpdated = true;
       currentPlan = freePlan;
     }
@@ -113,51 +113,67 @@ const ensureUserPlan = asyncHandler(async (req, res, next) => {
   if (currentPlan && currentPlan.name === 'PRO' && user.planExpiryDate) {
     const now = new Date();
     const expiryDate = new Date(user.planExpiryDate);
-    
+
     if (now > expiryDate) {
       console.log(`⚠️ Premium plan expired for user ${userId}. Downgrading to FREE...`);
-      
+
       // Downgrade to FREE plan
       const freePlan = await getOrCreateFreePlan();
-      
+
       user.planId = freePlan._id;
       user.planName = 'FREE';
       user.currentPlan = 'Free';
       user.planStartDate = new Date();
       user.planExpiryDate = null; // Remove expiry for FREE plan
-      
+
       planUpdated = true;
       currentPlan = freePlan;
     }
   }
 
-  // STEP 4: Ensure planName is in sync with planId
-  if (currentPlan && user.planName !== currentPlan.name) {
-    user.planName = currentPlan.name;
-    planUpdated = true;
-  }
+  // STEP 6: Synchronize new subscription fields
+  if (currentPlan) {
+    const isPremium = currentPlan.name === 'PRO' || currentPlan.name === 'PREMIUM';
+    const status = isPremium ? 'premium' : 'free';
 
-  // STEP 5: Ensure currentPlan matches planName (for backward compatibility)
-  if (user.planName) {
-    const normalizedCurrentPlan = user.planName === 'FREE' ? 'Free' : 
-                                  user.planName === 'PRO' ? 'Premium' : user.currentPlan;
-    
-    if (user.currentPlan !== normalizedCurrentPlan) {
-      user.currentPlan = normalizedCurrentPlan;
+    if (user.subscriptionStatus !== status) {
+      user.subscriptionStatus = status;
+      planUpdated = true;
+    }
+
+    if (!user.subscriptionPlan || user.subscriptionPlan.toString() !== currentPlan._id.toString()) {
+      user.subscriptionPlan = currentPlan._id;
+      planUpdated = true;
+    }
+
+    if (!user.subscriptionStartDate) {
+      user.subscriptionStartDate = user.planStartDate || new Date();
+      planUpdated = true;
+    }
+
+    if (user.subscriptionEndDate !== user.planExpiryDate) {
+      user.subscriptionEndDate = user.planExpiryDate;
       planUpdated = true;
     }
   }
 
-  // STEP 6: Save user if plan was updated
-  if (planUpdated) {
-    await user.save();
-    console.log(`✓ User ${userId} plan updated: planId=${user.planId}, planName=${user.planName}`);
-    
-    // Update req.user with fresh data
-    req.user = await User.findById(userId).select('-password');
+  // STEP 7: Count actual resumes if resumesCreated is out of sync (optional optimization)
+  const actualCount = await mongoose.model('Resume').countDocuments({ userId: user._id });
+  if (user.resumesCreated !== actualCount) {
+    user.resumesCreated = actualCount;
+    planUpdated = true;
   }
 
-  // STEP 7: Attach plan to request for use in controllers
+  // STEP 8: Save user if plan was updated
+  if (planUpdated) {
+    await user.save();
+    console.log(`✓ User ${userId} plan synchronized: status=${user.subscriptionStatus}`);
+
+    // Update req.user with fresh data including populated plan
+    req.user = await User.findById(userId).select('-password').populate('subscriptionPlan');
+  }
+
+  // STEP 9: Attach plan to request for use in controllers
   req.userPlan = currentPlan;
   req.userPlanName = user.planName;
 

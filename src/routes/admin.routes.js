@@ -164,14 +164,20 @@ router.patch('/users/:id/plan', updateUserPlan);
 // ============================================
 
 const {
-  getPlans,
+  getAllPlans,
   getPlanById,
-  updatePlan
-} = require('../controllers/admin/adminPlan.controller');
+  updatePlan,
+  createPlan,
+  deletePlan,
+  togglePlanStatus
+} = require('../controllers/adminPlan.controller');
 
-router.get('/plans', getPlans);
+router.get('/plans', getAllPlans);
+router.post('/plans', createPlan);
 router.get('/plans/:id', getPlanById);
 router.put('/plans/:id', updatePlan);
+router.delete('/plans/:id', deletePlan);
+router.patch('/plans/:id/toggle-status', togglePlanStatus);
 
 // ============================================
 // SETTINGS MANAGEMENT ROUTES

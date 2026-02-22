@@ -497,12 +497,23 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .limit(5)
     .select('title status completionPercentage updatedAt templateId');
 
+  // Robust resume limit detection
+  const plan = user.planId;
+  let resumeLimit = 3;
+  if (plan) {
+    resumeLimit = Math.max(plan.resumeLimit || 0, plan.maxFreeTemplates || 0) || (plan.name === 'PRO' ? -1 : 3);
+  }
+
   // Prepare full response data
   const responseData = {
     user: user.getPublicProfile(),
     notificationCount: unreadNotificationsCount,
     totalResumes: totalResumesCount,
-    recentResumes: recentResumes
+    resumesCreated: totalResumesCount, // For frontend consistency
+    recentResumes: recentResumes,
+    subscriptionStatus: user.subscriptionStatus,
+    resumeLimit: resumeLimit,
+    subscriptionPlan: user.subscriptionPlan || user.planId
   };
 
   // If user has a planId but it's not populated or needs specific info
