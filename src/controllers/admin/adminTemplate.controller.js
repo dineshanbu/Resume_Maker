@@ -226,7 +226,21 @@ const createTemplate = asyncHandler(async (req, res) => {
     // Optional fields
     if (templateData.htmlTemplate) newTemplateData.htmlTemplate = templateData.htmlTemplate;
     if (templateData.cssTemplate) newTemplateData.cssTemplate = templateData.cssTemplate;
-    if (templateData.subscriptionTier) newTemplateData.subscriptionTier = templateData.subscriptionTier;
+
+    // Unify tier and premium fields
+    const subscriptionTier = (templateData.subscriptionTier || 'free').toLowerCase();
+    const isPremium = templateData.isPremium === true || templateData.isPremium === 'true' || subscriptionTier === 'premium';
+
+    newTemplateData.subscriptionTier = subscriptionTier;
+    newTemplateData.isPremium = isPremium;
+
+    // Sync accessType for backward compatibility
+    if (isPremium) {
+      newTemplateData.accessType = 'PREMIUM';
+    } else {
+      newTemplateData.accessType = 'FREE';
+    }
+
     if (templateData.thumbnail) newTemplateData.thumbnail = templateData.thumbnail;
 
     // New builder fields - parse config if it's a string (from multipart/form-data)
@@ -437,6 +451,18 @@ const updateTemplate = asyncHandler(async (req, res) => {
       console.error('Image upload error:', error);
       return badRequestResponse(res, `Failed to upload image: ${error.message}`);
     }
+  }
+
+  // Handle plan updates and field synchronization
+  if ('subscriptionTier' in req.body || 'isPremium' in req.body) {
+    const subscriptionTier = (req.body.subscriptionTier || template.subscriptionTier || 'free').toLowerCase();
+    const isPremium = req.body.isPremium === true || req.body.isPremium === 'true' || subscriptionTier === 'premium';
+
+    req.body.subscriptionTier = subscriptionTier;
+    req.body.isPremium = isPremium;
+
+    // Sync accessType
+    req.body.accessType = isPremium ? 'PREMIUM' : 'FREE';
   }
 
   // Parse config and other JSON fields if they're strings (from multipart/form-data)

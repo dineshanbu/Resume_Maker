@@ -117,6 +117,19 @@ const templateSchema = new mongoose.Schema({
     index: true
   },
 
+  subscriptionTier: {
+    type: String,
+    enum: ['free', 'basic', 'premium'],
+    default: 'free',
+    index: true
+  },
+
+  isPremium: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+
   // Created by admin user
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

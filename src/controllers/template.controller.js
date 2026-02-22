@@ -57,23 +57,8 @@ const getAllTemplates = asyncHandler(async (req, res) => {
     ]
   };
 
-  const tierFilter = subscriptionTier
-    ? {
-      $or: [
-        { subscriptionTier: subscriptionTier.toLowerCase() },
- 
-      ]
-    }
-    : {
-      $or: [
-        { subscriptionTier: { $in: tierHierarchy[userTier] } },
- 
-        { subscriptionTier: { $exists: false } } // Fallback for old records
-      ]
-    };
-
   const query = {
-    $and: [statusFilter, tierFilter]
+    ...statusFilter
   };
 
   // Support categoryId filter
