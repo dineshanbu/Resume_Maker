@@ -11,18 +11,9 @@ const sectionLayoutSchema = new mongoose.Schema({
         ref: 'SectionMaster',
         required: true
     },
-    // We keep sectionType for backward compatibility during migration, but it should be derived from sectionMaster
-    sectionType: {
-        type: String,
-        required: false // Made optional as we move to sectionMaster
-    },
     htmlContent: {
         type: String,
         required: true
-    },
-    cssContent: {
-        type: String,
-        default: ''
     },
     config: {
         type: Object,
@@ -31,10 +22,6 @@ const sectionLayoutSchema = new mongoose.Schema({
     previewImage: {
         type: String,
         default: ''
-    },
-    isDefault: {
-        type: Boolean,
-        default: false
     },
     status: {
         type: String,

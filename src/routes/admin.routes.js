@@ -20,7 +20,7 @@ const {
 
 // Import master routes
 const masterRoutes = require('./master.routes');
-const layoutRoutes = require('./layout.routes');
+
 
 // All admin routes require authentication and admin role
 router.use(authenticate);
@@ -85,7 +85,7 @@ router.patch('/templates/:id/rating-toggle', toggleTemplateRating);
 
 // Mount master routes
 router.use('/masters', masterRoutes);
-router.use('/', layoutRoutes);
+
 
 // ============================================
 // USER MANAGEMENT ROUTES
@@ -109,19 +109,28 @@ router.patch('/users/:id/plan', updateUserPlan);
 // SUBSCRIPTION MANAGEMENT ROUTES
 // ============================================
 
-// const {
-//   getAllSubscriptions,
-//   getSubscriptionAnalytics,
-//   updateSubscriptionPlan,
-//   cancelUserSubscription,
-//   getRevenueReport
-// } = require('../controllers/admin/adminSubscription.controller');
+const {
+  getAdminPlans,
+  createAdminPlan,
+  updateAdminPlan,
+  toggleAdminPlanStatus,
+  deleteAdminPlan,
+  getAdminOrders,
+  getAdminPayments,
+  getAdminSubscriptions,
+  getUsersWithPlan
+} = require('../controllers/admin/adminSubscription.controller');
 
-// router.get('/subscriptions', getAllSubscriptions);
-// router.get('/subscriptions/analytics', getSubscriptionAnalytics);
-// router.get('/subscriptions/revenue', getRevenueReport);
-// router.patch('/subscriptions/:id/plan', updateSubscriptionPlan);
-// router.post('/subscriptions/:id/cancel', cancelUserSubscription);
+router.get('/plans', getAdminPlans);
+router.post('/plans', createAdminPlan);
+router.put('/plans/:id', updateAdminPlan);
+router.patch('/plans/:id/toggle-status', toggleAdminPlanStatus);
+router.delete('/plans/:id', deleteAdminPlan);
+
+router.get('/orders', getAdminOrders);
+router.get('/payments', getAdminPayments);
+router.get('/subscriptions', getAdminSubscriptions);
+router.get('/users-with-plan', getUsersWithPlan);
 
 // ============================================
 // JOB MANAGEMENT ROUTES
@@ -159,25 +168,7 @@ router.patch('/users/:id/plan', updateUserPlan);
 // router.get('/analytics/user-growth', getUserGrowthAnalytics);
 // router.get('/analytics/template-usage', getTemplateUsageAnalytics);
 
-// ============================================
-// PLAN MANAGEMENT ROUTES
-// ============================================
 
-const {
-  getAllPlans,
-  getPlanById,
-  updatePlan,
-  createPlan,
-  deletePlan,
-  togglePlanStatus
-} = require('../controllers/adminPlan.controller');
-
-router.get('/plans', getAllPlans);
-router.post('/plans', createPlan);
-router.get('/plans/:id', getPlanById);
-router.put('/plans/:id', updatePlan);
-router.delete('/plans/:id', deletePlan);
-router.patch('/plans/:id/toggle-status', togglePlanStatus);
 
 // ============================================
 // SETTINGS MANAGEMENT ROUTES

@@ -56,12 +56,6 @@ const userSchema = new mongoose.Schema({
     unique: true
   },
 
-  linkedinId: {
-    type: String,
-    sparse: true,
-    unique: true
-  },
-
   // Email verification
   isVerified: {
     type: Boolean,
@@ -90,14 +84,13 @@ const userSchema = new mongoose.Schema({
       currency: { type: String, default: 'INR' }
     },
     receiveEmailAlerts: { type: Boolean, default: true },
-    preferredLanguage: { type: String, default: 'en' },
+
     theme: { type: String, enum: ['light', 'dark'], default: 'light' }
   },
 
   // Subscription info (reference)
   currentPlan: {
     type: String,
-    enum: ['Free', 'Basic', 'Premium', 'FREE', 'PRO'],
     default: 'Free'
   },
 
@@ -114,17 +107,14 @@ const userSchema = new mongoose.Schema({
   },
   planName: {
     type: String,
-    enum: ['FREE', 'PRO', 'PREMIUM'],
     default: 'FREE'
   },
   subscriptionType: {
     type: String,
-    enum: ['FREE', 'PREMIUM'],
     default: 'FREE'
   },
   subscriptionStatus: {
     type: String,
-    enum: ['ACTIVE', 'EXPIRED', 'free', 'premium'],
     default: 'free'
   },
   resumesCreated: {
@@ -156,17 +146,6 @@ const userSchema = new mongoose.Schema({
   // Reset password
   resetPasswordToken: String,
   resetPasswordExpires: Date,
-
-  // Referral
-  referralCode: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  referredBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
 
   // ==================== USER PROFILE FIELDS ====================
 

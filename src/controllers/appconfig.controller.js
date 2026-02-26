@@ -18,7 +18,7 @@ const City = require('../models/City.model');
 const EducationLevel = require('../models/EducationLevel.model');
 const LanguageMaster = require('../models/LanguageMaster.model');
 const SalaryRange = require('../models/SalaryRange.model');
-const PlanMaster = require('../models/PlanMaster.model');
+
 
 /**
  * @desc    Get app configuration (all master data)
@@ -28,7 +28,7 @@ const PlanMaster = require('../models/PlanMaster.model');
 const getAppConfig = asyncHandler(async (req, res) => {
   try {
     console.log('=== AppConfig API Called ===');
-    
+
     // Test TemplateCategory query directly (like admin does)
     const testQuery = {};
     testQuery.status = 'Active';
@@ -41,9 +41,9 @@ const getAppConfig = asyncHandler(async (req, res) => {
     // Fetch all master data - match admin controller approach exactly
     // Use the same query pattern as admin controller
     const query = { status: 'Active' };
-    
+
     console.log('Executing queries with query:', JSON.stringify(query));
-    
+
     // Fetch queries individually with error handling to see which one fails
     let resumeSections = [];
     let templateCategories = [];
@@ -172,12 +172,7 @@ const getAppConfig = asyncHandler(async (req, res) => {
       console.error('❌ SalaryRange error:', err.message);
     }
 
-    try {
-      plans = await PlanMaster.find(query).sort({ name: 1 }).lean();
-      console.log('✅ PlanMaster:', plans?.length || 0);
-    } catch (err) {
-      console.error('❌ PlanMaster error:', err.message);
-    }
+
 
     console.log('✅ Query results:', {
       resumeSections: resumeSections?.length || 0,
@@ -195,7 +190,7 @@ const getAppConfig = asyncHandler(async (req, res) => {
       educationLevels: educationLevels?.length || 0,
       languages: languages?.length || 0,
       salaryRanges: salaryRanges?.length || 0,
-      plans: plans?.length || 0
+
     });
 
     // Format data for frontend
@@ -215,8 +210,8 @@ const getAppConfig = asyncHandler(async (req, res) => {
       educationLevels: educationLevels || [],
       languages: languages || [],
       salaryRanges: salaryRanges || [],
-      plans: plans || [],
-      
+
+
       // Helper mappings for easy access
       jobRolesByCategory: {},
       skillsByCategory: {},
@@ -272,7 +267,7 @@ const getAppConfig = asyncHandler(async (req, res) => {
 
     // Debug: Verify template categories in config
     console.log('Config templateCategories count:', config.templateCategories?.length || 0);
-    
+
     return successResponse(res, config, 'App configuration retrieved successfully');
   } catch (error) {
     console.error('Error fetching app config:', error);
@@ -294,7 +289,7 @@ const getAppConfig = asyncHandler(async (req, res) => {
       educationLevels: [],
       languages: [],
       salaryRanges: [],
-      plans: [],
+
       jobRolesByCategory: {},
       skillsByCategory: {},
       statesByCountry: {},

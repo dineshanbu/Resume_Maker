@@ -17,20 +17,14 @@ const themeSchema = new mongoose.Schema({
     },
     fonts: {
         heading: { type: String, default: 'Roboto' },
-        body: { type: String, default: 'Roboto' },
-        sizeScale: { type: Number, default: 1.0 }
+        body: { type: String, default: 'Roboto' }
     },
     spacing: {
         margin: { type: String, default: '1rem' },
-        padding: { type: String, default: '1rem' },
-        lineHeight: { type: Number, default: 1.5 }
+        padding: { type: String, default: '1rem' }
     },
     previewImage: {
         type: String, default: ''
-    },
-    isDefault: {
-        type: Boolean,
-        default: false
     },
     status: {
         type: String,

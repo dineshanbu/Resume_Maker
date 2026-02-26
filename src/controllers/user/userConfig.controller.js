@@ -1,8 +1,9 @@
-const AdminLayout = require('../../models/AdminLayout.model');
+
 const Theme = require('../../models/Theme.model');
 const SectionMaster = require('../../models/SectionMaster.model');
 const SectionLayout = require('../../models/SectionLayout.model');
 const Template = require('../../models/Template.model');
+const TemplateCategory = require('../../models/TemplateCategory.model');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ApiResponse } = require('../../utils/apiResponse');
 
@@ -89,7 +90,7 @@ exports.getUserLayouts = asyncHandler(async (req, res) => {
         filter = getSubscriptionFilter(req.user);
     }
 
-    const layouts = await AdminLayout.find(filter).sort({ name: 1 });
+    const layouts = [];
     return res.status(200).json(new ApiResponse(200, layouts, 'Layouts fetched successfully'));
 });
 

@@ -185,7 +185,7 @@ const templateSchema = new mongoose.Schema({
   // --- Master Configuration References ---
   adminLayoutId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'AdminLayout',
+
     required: false
   },
   themeId: {

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const Plan = require('../models/Plan.model');
+const Resume = require('../models/Resume.model');
 const asyncHandler = require('../utils/asyncHandler');
 
 /**
@@ -8,10 +9,11 @@ const asyncHandler = require('../utils/asyncHandler');
  * @returns {Promise<Object>} FREE plan document
  */
 async function getOrCreateFreePlan() {
-  let freePlan = await Plan.findOne({ name: 'FREE', isActive: true });
+  // Find the first available active free plan (price: 0)
+  let freePlan = await Plan.findOne({ price: 0, isActive: true }).sort({ createdAt: 1 });
 
   if (!freePlan) {
-    console.warn('⚠️ FREE plan not found in DB. Creating default FREE plan...');
+    console.warn('⚠️ No free plan found (price: 0). Creating default FREE plan...');
     freePlan = await Plan.create({
       name: 'FREE',
       price: 0,
@@ -158,9 +160,16 @@ const ensureUserPlan = asyncHandler(async (req, res, next) => {
   }
 
   // STEP 7: Count actual resumes if resumesCreated is out of sync (optional optimization)
-  const actualCount = await mongoose.model('Resume').countDocuments({ userId: user._id });
+  const actualCount = await Resume.countDocuments({ userId: user._id });
   if (user.resumesCreated !== actualCount) {
     user.resumesCreated = actualCount;
+    planUpdated = true;
+  }
+
+  // Sanitize corrupted enums to prevent validation crash during save
+  const validCurrentPlans = ['Free', 'Basic', 'Premium', 'FREE', 'PRO'];
+  if (user.currentPlan && !validCurrentPlans.includes(user.currentPlan)) {
+    user.currentPlan = (currentPlan && (currentPlan.name === 'PRO' || currentPlan.name === 'PREMIUM')) ? 'Premium' : 'Free';
     planUpdated = true;
   }
 

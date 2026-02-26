@@ -21,7 +21,7 @@ const Country = require('../../models/Country.model');
 const EducationLevel = require('../../models/EducationLevel.model');
 const LanguageMaster = require('../../models/LanguageMaster.model');
 const SalaryRange = require('../../models/SalaryRange.model');
-const PlanMaster = require('../../models/PlanMaster.model');
+
 
 // Import additional master models
 const JobType = require('../../models/JobType.model');
@@ -49,7 +49,7 @@ const getModelByType = (type) => {
     'education-levels': EducationLevel,
     'languages': LanguageMaster,
     'salary-ranges': SalaryRange,
-    'plans': PlanMaster,
+
     'email-templates': EmailTemplate,
     'themes': Theme,
     'section-layouts': SectionLayout

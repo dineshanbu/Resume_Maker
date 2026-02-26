@@ -1,26 +1,32 @@
-// backend/src/controllers/subscription.controller.js
-const {
-  SubscriptionPlan,
-  UserSubscription,
-  PaymentTransaction
-} = require('../models/Subscription.model');
-const User = require('../models/User.model');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 const asyncHandler = require('../utils/asyncHandler');
+const Plan = require('../models/Plan.model');
+const Order = require('../models/Order.model');
+const Payment = require('../models/Payment.model');
+const Subscription = require('../models/Subscription.model');
+const User = require('../models/User.model');
 const {
   successResponse,
   createdResponse,
   notFoundResponse,
-  badRequestResponse
+  badRequestResponse,
+  errorResponse
 } = require('../utils/apiResponse');
 
+// Initialize Razorpay
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SJBXPiBBPu4PAQ',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'QI0NNheZi0uuYY2NrgX1EnOb'
+});
+
 /**
- * @desc    Get all subscription plans
+ * @desc    Get all available plans
  * @route   GET /api/v1/subscriptions/plans
  * @access  Public
  */
-const getAllPlans = asyncHandler(async (req, res) => {
-  const plans = await SubscriptionPlan.find({ isActive: true }).sort({ sortOrder: 1 });
-
+exports.getAllPlans = asyncHandler(async (req, res) => {
+  const plans = await Plan.find({ isActive: true }).sort({ price: 1 });
   return successResponse(res, { plans }, 'Subscription plans retrieved successfully');
 });
 
@@ -29,152 +35,153 @@ const getAllPlans = asyncHandler(async (req, res) => {
  * @route   GET /api/v1/subscriptions/my-subscription
  * @access  Private
  */
-const getMySubscription = asyncHandler(async (req, res) => {
-  let subscription = await UserSubscription.findOne({ userId: req.user._id });
-
-  // If no subscription exists, create free subscription
-  if (!subscription) {
-    subscription = await UserSubscription.create({
-      userId: req.user._id,
-      planName: 'Free',
-      endDate: new Date('2099-12-31') // Free plan never expires
-    });
-  }
-
-  // Get plan details
-  const plan = await SubscriptionPlan.findOne({ name: subscription.planName });
+exports.getMySubscription = asyncHandler(async (req, res) => {
+  const subscription = await Subscription.findOne({
+    userId: req.user._id,
+    status: 'active',
+    endDate: { $gt: new Date() }
+  }).populate('planId');
 
   return successResponse(res, {
     subscription,
-    plan,
-    isActive: subscription.isActive()
+    isActive: !!subscription
   });
 });
 
 /**
- * @desc    Create/Initiate payment order
+ * @desc    Create Razorpay order (Step 2 & 3)
  * @route   POST /api/v1/subscriptions/create-order
  * @access  Private
  */
-const createPaymentOrder = asyncHandler(async (req, res) => {
-  const { planName, billingCycle } = req.body;
+exports.createPaymentOrder = asyncHandler(async (req, res) => {
+  const { planId } = req.body;
+  const userId = req.user._id;
 
-  // Validate plan
-  const plan = await SubscriptionPlan.findOne({ name: planName, isActive: true });
-  if (!plan) {
-    return notFoundResponse(res, 'Subscription plan not found');
+  const plan = await Plan.findById(planId);
+  if (!plan || !plan.isActive) {
+    return notFoundResponse(res, 'Active subscription plan not found');
   }
 
-  // Calculate amount
-  const amount = billingCycle === 'yearly'
-    ? plan.pricing.yearly.amount
-    : plan.pricing.monthly.amount;
+  if (plan.price <= 0) {
+    return badRequestResponse(res, 'Cannot create order for a free plan');
+  }
 
-  // Create transaction record
-  const transactionId = `TXN${Date.now()}${Math.random().toString(36).substring(7)}`;
-
-  const transaction = await PaymentTransaction.create({
-    userId: req.user._id,
-    transactionId,
-    amount,
-    currency: plan.pricing.monthly.currency,
-    planName,
-    billingCycle,
-    status: 'pending',
-    paymentGateway: 'razorpay'
-  });
-
-  // In production, integrate with Razorpay/Stripe
-  // For now, return mock order
-  const order = {
-    orderId: transactionId,
-    amount: amount * 100, // Convert to paise for Razorpay
-    currency: 'INR',
-    planName,
-    billingCycle
+  const options = {
+    amount: plan.price * 100, // paise
+    currency: plan.currency || 'INR',
+    receipt: `rcpt_${userId.toString().slice(-4)}_${Date.now()}`
   };
 
-  return createdResponse(res, {
-    order,
-    transaction: transaction._id
-  }, 'Payment order created successfully');
+  try {
+    const rzpOrder = await razorpay.orders.create(options);
+
+    // 3. Save Order in DB with status = created
+    const order = await Order.create({
+      userId,
+      planId,
+      razorpayOrderId: rzpOrder.id,
+      amount: plan.price,
+      currency: options.currency,
+      status: 'created'
+    });
+
+    return createdResponse(res, {
+      razorpayOrder: rzpOrder,
+      orderId: order._id
+    }, 'Payment order created successfully');
+  } catch (error) {
+    console.error('Razorpay Error:', error);
+    return errorResponse(res, 'Failed to create payment order');
+  }
 });
 
 /**
- * @desc    Verify payment and activate subscription
+ * @desc    Verify payment and activate subscription (Step 5, 6, 7, 8)
  * @route   POST /api/v1/subscriptions/verify-payment
  * @access  Private
  */
-const verifyPayment = asyncHandler(async (req, res) => {
+exports.verifyPayment = asyncHandler(async (req, res) => {
   const {
-    transactionId,
-    paymentId,
-    signature,
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
     orderId
   } = req.body;
+  const userId = req.user._id;
 
-  // Find transaction
-  const transaction = await PaymentTransaction.findOne({ transactionId });
-  if (!transaction) {
-    return notFoundResponse(res, 'Transaction not found');
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
+    return badRequestResponse(res, 'Incomplete payment details');
   }
 
-  // In production, verify signature with Razorpay/Stripe
-  // For now, assume payment is successful
-  const paymentVerified = true;
-
-  if (!paymentVerified) {
-    transaction.status = 'failed';
-    transaction.failureReason = 'Payment verification failed';
-    await transaction.save();
-
-    return badRequestResponse(res, 'Payment verification failed');
+  const order = await Order.findById(orderId).populate('planId');
+  if (!order || order.razorpayOrderId !== razorpay_order_id) {
+    return notFoundResponse(res, 'Invalid order details');
   }
 
-  // Update transaction
-  transaction.status = 'success';
-  transaction.gatewayTransactionId = paymentId;
-  transaction.gatewayOrderId = orderId;
-  await transaction.save();
+  // 5. Verify Signature
+  const body = razorpay_order_id + "|" + razorpay_payment_id;
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret')
+    .update(body.toString())
+    .digest('hex');
 
-  // Create or update subscription
-  const plan = await SubscriptionPlan.findOne({ name: transaction.planName });
-  const duration = transaction.billingCycle === 'yearly' ? 365 : 30;
-  const endDate = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
-
-  let subscription = await UserSubscription.findOne({ userId: req.user._id });
-
-  if (subscription) {
-    subscription.planName = transaction.planName;
-    subscription.billingCycle = transaction.billingCycle;
-    subscription.status = 'active';
-    subscription.startDate = new Date();
-    subscription.endDate = endDate;
-    subscription.nextBillingDate = endDate;
-    await subscription.save();
-  } else {
-    subscription = await UserSubscription.create({
-      userId: req.user._id,
-      planName: transaction.planName,
-      billingCycle: transaction.billingCycle,
-      status: 'active',
-      endDate,
-      nextBillingDate: endDate
-    });
+  if (expectedSignature !== razorpay_signature) {
+    order.status = 'failed';
+    await order.save();
+    return badRequestResponse(res, 'Payment signature verification failed');
   }
 
-  // Update user's current plan
-  await User.findByIdAndUpdate(req.user._id, {
-    currentPlan: transaction.planName
+  // 6. Update Order and Payment 
+  order.status = 'completed';
+  await order.save();
+
+  const payment = await Payment.create({
+    userId,
+    orderId: order._id,
+    razorpayPaymentId: razorpay_payment_id,
+    razorpaySignature: razorpay_signature,
+    amount: order.amount,
+    status: 'success'
   });
 
-  // Link transaction to subscription
-  transaction.subscriptionId = subscription._id;
-  await transaction.save();
+  // 7. Create Subscription Entry
+  const plan = order.planId;
+  const durationDays = plan.validity || 30; // default 30 days
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + durationDays);
+
+  const subscription = await Subscription.create({
+    userId,
+    planId: plan._id,
+    paymentId: payment._id,
+    startDate: new Date(),
+    endDate,
+    status: 'active'
+  });
+
+  // 8. Update User role/access
+  // Resolve legacy enums safely
+  let legacyCurrentPlan = 'Premium';
+  let legacyPlanName = 'PREMIUM';
+
+  if (plan.name && plan.name.toLowerCase().includes('pro')) {
+    legacyCurrentPlan = 'PRO';
+    legacyPlanName = 'PRO';
+  }
+
+  await User.findByIdAndUpdate(userId, {
+    currentPlan: legacyCurrentPlan,
+    planId: plan._id,
+    subscriptionPlan: plan._id,
+    planName: legacyPlanName,
+    subscriptionType: 'PREMIUM',
+    subscriptionStatus: 'ACTIVE',
+    planExpiryDate: endDate
+  });
 
   return successResponse(res, {
     subscription,
-    transaction
+    payment
   }, 'Payment verified and subscription activated successfully');
 });
 
@@ -183,185 +190,35 @@ const verifyPayment = asyncHandler(async (req, res) => {
  * @route   POST /api/v1/subscriptions/cancel
  * @access  Private
  */
-const cancelSubscription = asyncHandler(async (req, res) => {
-  const subscription = await UserSubscription.findOne({ userId: req.user._id });
+exports.cancelSubscription = asyncHandler(async (req, res) => {
+  const subscription = await Subscription.findOne({
+    userId: req.user._id,
+    status: 'active'
+  });
 
   if (!subscription) {
     return notFoundResponse(res, 'No active subscription found');
   }
 
-  if (subscription.planName === 'Free') {
-    return badRequestResponse(res, 'Cannot cancel free plan');
-  }
+  subscription.status = 'cancelled';
+  await subscription.save();
 
-  await subscription.cancel();
+  await User.findByIdAndUpdate(req.user._id, {
+    subscriptionStatus: 'cancelled'
+  });
 
-  return successResponse(
-    res,
-    { subscription },
-    'Subscription cancelled successfully. You can continue using premium features until the end of your billing period.'
-  );
+  return successResponse(res, null, 'Subscription cancelled successfully');
 });
 
 /**
- * @desc    Get subscription usage stats
- * @route   GET /api/v1/subscriptions/usage
- * @access  Private
- */
-const getUsageStats = asyncHandler(async (req, res) => {
-  let subscription = await UserSubscription.findOne({ userId: req.user._id });
-
-  if (!subscription) {
-    subscription = await UserSubscription.create({
-      userId: req.user._id,
-      planName: 'Free',
-      endDate: new Date('2099-12-31')
-    });
-  }
-
-  await subscription.resetMonthlyUsage();
-
-  const plan = await SubscriptionPlan.findOne({ name: subscription.planName });
-
-  const usage = {
-    current: subscription.usage,
-    limits: plan.features,
-    planName: subscription.planName,
-    billingCycle: subscription.billingCycle,
-    nextResetDate: subscription.usage.lastResetDate
-  };
-
-  return successResponse(res, usage, 'Usage statistics retrieved successfully');
-});
-
-/**
- * @desc    Get payment history
+ * @desc    Get payment history (Transactions)
  * @route   GET /api/v1/subscriptions/transactions
  * @access  Private
  */
-const getTransactions = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  const skip = (page - 1) * limit;
+exports.getTransactions = asyncHandler(async (req, res) => {
+  const payments = await Payment.find({ userId: req.user._id })
+    .populate('orderId')
+    .sort({ createdAt: -1 });
 
-  const transactions = await PaymentTransaction.find({ userId: req.user._id })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(parseInt(limit));
-
-  const total = await PaymentTransaction.countDocuments({ userId: req.user._id });
-
-  return successResponse(res, {
-    transactions,
-    pagination: {
-      total,
-      page: parseInt(page),
-      pages: Math.ceil(total / limit),
-      limit: parseInt(limit)
-    }
-  });
+  return successResponse(res, { payments }, 'Transactions retrieved successfully');
 });
-
-/**
- * @desc    Check if user can use feature
- * @route   GET /api/v1/subscriptions/check-feature/:feature
- * @access  Private
- */
-const checkFeatureAccess = asyncHandler(async (req, res) => {
-  const { feature } = req.params;
-
-  let subscription = await UserSubscription.findOne({ userId: req.user._id });
-
-  if (!subscription) {
-    subscription = await UserSubscription.create({
-      userId: req.user._id,
-      planName: 'Free',
-      endDate: new Date('2099-12-31')
-    });
-  }
-
-  const canUse = await subscription.canUseFeature(feature);
-  const plan = await SubscriptionPlan.findOne({ name: subscription.planName });
-
-  return successResponse(res, {
-    canUse,
-    feature,
-    currentUsage: subscription.usage[feature] || 0,
-    limit: plan.features[feature],
-    planName: subscription.planName
-  });
-});
-
-/**
- * @desc    Increment feature usage
- * @route   POST /api/v1/subscriptions/increment-usage/:feature
- * @access  Private
- */
-const incrementFeatureUsage = asyncHandler(async (req, res) => {
-  const { feature } = req.params;
-
-  let subscription = await UserSubscription.findOne({ userId: req.user._id });
-
-  if (!subscription) {
-    return notFoundResponse(res, 'No subscription found');
-  }
-
-  const canUse = await subscription.canUseFeature(feature);
-
-  if (!canUse) {
-    return badRequestResponse(res, 'Feature limit reached. Please upgrade your plan.');
-  }
-
-  await subscription.incrementUsage(feature);
-
-  return successResponse(
-    res,
-    { usage: subscription.usage },
-    'Usage incremented successfully'
-  );
-});
-
-// =============== ADMIN ROUTES ===============
-
-/**
- * @desc    Create subscription plan (Admin)
- * @route   POST /api/v1/subscriptions/plans
- * @access  Private (Admin)
- */
-const createPlan = asyncHandler(async (req, res) => {
-  const plan = await SubscriptionPlan.create(req.body);
-
-  return createdResponse(res, { plan }, 'Subscription plan created successfully');
-});
-
-/**
- * @desc    Update subscription plan (Admin)
- * @route   PUT /api/v1/subscriptions/plans/:id
- * @access  Private (Admin)
- */
-const updatePlan = asyncHandler(async (req, res) => {
-  const plan = await SubscriptionPlan.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true, runValidators: true }
-  );
-
-  if (!plan) {
-    return notFoundResponse(res, 'Plan not found');
-  }
-
-  return successResponse(res, { plan }, 'Plan updated successfully');
-});
-
-module.exports = {
-  getAllPlans,
-  getMySubscription,
-  createPaymentOrder,
-  verifyPayment,
-  cancelSubscription,
-  getUsageStats,
-  getTransactions,
-  checkFeatureAccess,
-  incrementFeatureUsage,
-  createPlan,
-  updatePlan
-};

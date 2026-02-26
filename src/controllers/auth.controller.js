@@ -105,32 +105,8 @@ const signup = asyncHandler(async (req, res) => {
   }
 
   // Get FREE plan to assign to new user
-  const Plan = require('../models/Plan.model');
-  const freePlan = await Plan.findOne({ name: 'FREE', isActive: true });
-  if (!freePlan) {
-    console.error('⚠️ FREE plan not found. Creating default FREE plan...');
-    // Create default FREE plan if it doesn't exist
-    const defaultFreePlan = await Plan.create({
-      name: 'FREE',
-      price: 0,
-      billingCycle: 'monthly',
-      isActive: true,
-      features: {
-        resumeCreateUnlimited: true,
-        maxFreeTemplates: 5,
-        premiumTemplatesAccess: false,
-        resumeExportPdf: false,
-        resumeExportHtml: false,
-        resumeDownloadLimit: 0,
-        resumeShareUrl: false,
-        resumeUrlValidityDays: 0,
-        autoApplyJobs: false,
-        resumeAnalytics: false
-      },
-      description: 'Free plan with basic features'
-    });
-    freePlan = defaultFreePlan;
-  }
+  const { getOrCreateFreePlan } = require('../middlewares/planValidation.middleware');
+  const freePlan = await getOrCreateFreePlan();
 
   // Create new user with isVerified = false and FREE plan assigned
   const user = await User.create({
@@ -143,7 +119,7 @@ const signup = asyncHandler(async (req, res) => {
     isVerified: false,
     currentPlan: 'Free',
     planId: freePlan._id,
-    planName: 'FREE',
+    planName: freePlan.name,
     planStartDate: new Date(),
     planExpiryDate: null // FREE plan has no expiry
   });
@@ -221,11 +197,11 @@ const login = asyncHandler(async (req, res) => {
 
   // CRITICAL: Ensure user has planId assigned (fix for existing users without planId)
   if (!user.planId) {
-    const Plan = require('../models/Plan.model');
-    const freePlan = await Plan.findOne({ name: 'FREE', isActive: true });
+    const { getOrCreateFreePlan } = require('../middlewares/planValidation.middleware');
+    const freePlan = await getOrCreateFreePlan();
     if (freePlan) {
       user.planId = freePlan._id;
-      user.planName = 'FREE';
+      user.planName = freePlan.name;
       user.currentPlan = 'Free';
       user.planStartDate = new Date();
       user.planExpiryDate = null;
@@ -360,11 +336,11 @@ const googleLogin = asyncHandler(async (req, res) => {
 
       // Assign FREE plan if not already assigned
       if (!user.planId || !user.planName) {
-        const Plan = require('../models/Plan.model');
-        const freePlan = await Plan.findOne({ name: 'FREE', isActive: true });
+        const { getOrCreateFreePlan } = require('../middlewares/planValidation.middleware');
+        const freePlan = await getOrCreateFreePlan();
         if (freePlan) {
           user.planId = freePlan._id;
-          user.planName = 'FREE';
+          user.planName = freePlan.name;
           user.planStartDate = new Date();
           user.planExpiryDate = null;
         }
@@ -375,31 +351,8 @@ const googleLogin = asyncHandler(async (req, res) => {
     } else {
       // CASE C: Email does NOT exist → Auto signup
       // Get FREE plan to assign
-      const Plan = require('../models/Plan.model');
-      const freePlan = await Plan.findOne({ name: 'FREE', isActive: true });
-      if (!freePlan) {
-        // Create default FREE plan if it doesn't exist
-        const defaultFreePlan = await Plan.create({
-          name: 'FREE',
-          price: 0,
-          billingCycle: 'monthly',
-          isActive: true,
-          features: {
-            resumeCreateUnlimited: true,
-            maxFreeTemplates: 5,
-            premiumTemplatesAccess: false,
-            resumeExportPdf: false,
-            resumeExportHtml: false,
-            resumeDownloadLimit: 0,
-            resumeShareUrl: false,
-            resumeUrlValidityDays: 0,
-            autoApplyJobs: false,
-            resumeAnalytics: false
-          },
-          description: 'Free plan with basic features'
-        });
-        freePlan = defaultFreePlan;
-      }
+      const { getOrCreateFreePlan } = require('../middlewares/planValidation.middleware');
+      const freePlan = await getOrCreateFreePlan();
 
       user = await User.create({
         fullName,
@@ -413,7 +366,7 @@ const googleLogin = asyncHandler(async (req, res) => {
         role: 'user',
         currentPlan: 'Free',
         planId: freePlan._id,
-        planName: 'FREE',
+        planName: freePlan.name,
         planStartDate: new Date(),
         planExpiryDate: null
       });

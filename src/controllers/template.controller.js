@@ -2,8 +2,17 @@
 const Template = require('../models/Template.model');
 const TemplateRating = require('../models/TemplateRating.model');
 const Resume = require('../models/Resume.model');
-const { UserSubscription } = require('../models/Subscription.model');
+const Subscription = require('../models/Subscription.model');
 const asyncHandler = require('../utils/asyncHandler');
+
+// Helper to normalize dynamic plan names into static keys ('free', 'basic', 'premium')
+const resolveUserTier = (planName) => {
+  if (!planName) return 'free';
+  const name = planName.toLowerCase();
+  if (name.includes('premium') || name.includes('pro')) return 'premium';
+  if (name.includes('basic') || name.includes('standard')) return 'basic';
+  return 'free';
+};
 const {
   successResponse,
   createdResponse,
@@ -29,11 +38,11 @@ const getAllTemplates = asyncHandler(async (req, res) => {
   // If user is authenticated, check their subscription
   let userTier = 'free';
   if (req.user) {
-    const subscription = await UserSubscription.findOne({ userId: req.user._id });
-    if (subscription && subscription.isActive()) {
-      userTier = subscription.planName.toLowerCase();
+    const subscription = await Subscription.findOne({ userId: req.user._id, status: 'active' }).populate('planId');
+    if (subscription && subscription.isActive() && subscription.planId) {
+      userTier = resolveUserTier(subscription.planId.name);
     } else {
-      userTier = req.user.currentPlan?.toLowerCase() || 'free';
+      userTier = resolveUserTier(req.user.planName);
     }
   }
 
@@ -165,11 +174,11 @@ const getTemplatesByProfession = asyncHandler(async (req, res) => {
   // Get user tier
   let userTier = 'free';
   if (req.user) {
-    const subscription = await UserSubscription.findOne({ userId: req.user._id });
-    if (subscription && subscription.isActive()) {
-      userTier = subscription.planName.toLowerCase();
+    const subscription = await Subscription.findOne({ userId: req.user._id, status: 'active' }).populate('planId');
+    if (subscription && subscription.isActive() && subscription.planId) {
+      userTier = resolveUserTier(subscription.planId.name);
     } else {
-      userTier = req.user.currentPlan.toLowerCase();
+      userTier = resolveUserTier(req.user.planName);
     }
   }
 
@@ -223,13 +232,13 @@ const getTemplateById = asyncHandler(async (req, res) => {
   let fullTemplate = false;
 
   if (req.user) {
-    const subscription = await UserSubscription.findOne({ userId: req.user._id });
+    const subscription = await Subscription.findOne({ userId: req.user._id, status: 'active' }).populate('planId');
     let userTier = 'free';
 
-    if (subscription && subscription.isActive()) {
-      userTier = subscription.planName.toLowerCase();
+    if (subscription && subscription.isActive() && subscription.planId) {
+      userTier = resolveUserTier(subscription.planId.name);
     } else {
-      userTier = req.user.currentPlan?.toLowerCase() || 'free';
+      userTier = resolveUserTier(req.user.planName);
     }
 
     // Check tier access (resilient to both subscriptionTier and accessType)
@@ -340,13 +349,13 @@ const useTemplate = asyncHandler(async (req, res) => {
   }
 
   // Check subscription access
-  const subscription = await UserSubscription.findOne({ userId: req.user._id });
+  const subscription = await Subscription.findOne({ userId: req.user._id, status: 'active' }).populate('planId');
   let userTier = 'free';
 
-  if (subscription && subscription.isActive()) {
-    userTier = subscription.planName.toLowerCase();
+  if (subscription && subscription.isActive() && subscription.planId) {
+    userTier = resolveUserTier(subscription.planId.name);
   } else {
-    userTier = req.user.currentPlan?.toLowerCase() || 'free';
+    userTier = resolveUserTier(req.user.planName);
   }
 
   // Verify tier access (resilient to both subscriptionTier and accessType)
