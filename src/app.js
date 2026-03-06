@@ -179,6 +179,7 @@ app.use(`/api/${API_VERSION}/template-ratings`, require('./routes/templateRating
 app.use(`/api/${API_VERSION}/subscriptions`, subscriptionRoutes);
 app.use(`/api/${API_VERSION}/notifications`, notificationRoutes);
 app.use(`/api/${API_VERSION}/admin`, adminRoutes);
+app.use(`/api/${API_VERSION}/section-layouts`, require('./routes/sectionLayout.routes'));
 
 app.use(`/api/${API_VERSION}/user/config`, require('./routes/user-config.routes'));
 

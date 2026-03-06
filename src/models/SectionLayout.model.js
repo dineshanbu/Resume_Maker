@@ -1,47 +1,72 @@
 const mongoose = require('mongoose');
 
 const sectionLayoutSchema = new mongoose.Schema({
-    name: {
-        type: String, // e.g., "Timeline Style", "Card Style"
+    sectionType: {
+        type: String, // e.g., 'header', 'summary', 'experience', 'education', 'skills', 'projects', 'languages', 'certifications', 'awards', 'interests', 'references'
+        required: true,
+        trim: true,
+        lowercase: true
+    },
+    layoutName: {
+        type: String,
         required: true,
         trim: true
     },
-    sectionMaster: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'SectionMaster',
-        required: true
-    },
-    htmlContent: {
+    layoutKey: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        trim: true
     },
-    config: {
-        type: Object,
-        default: {}
-    },
-    previewImage: {
+    description: {
         type: String,
         default: ''
     },
-    status: {
+    html: {
         type: String,
-        enum: ['Active', 'Inactive'],
-        default: 'Active'
+        required: true
     },
-    accessType: {
+    css: {
         type: String,
-        enum: ['FREE', 'PREMIUM', 'BOTH'],
-        default: 'FREE'
+        default: ''
     },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+    thumbnail: {
+        type: String, // preview image url
+        default: ''
+    },
+    category: {
+        type: String,
+        enum: ['standard', 'premium'],
+        default: 'standard'
+    },
+    isPremium: {
+        type: Boolean,
+        default: false
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    preview_data: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
     }
 }, {
     timestamps: true
 });
 
-// Ensure unique name per section master
-sectionLayoutSchema.index({ sectionMaster: 1, name: 1 }, { unique: true });
+// Pre-save: sync category with isPremium
+sectionLayoutSchema.pre('save', function (next) {
+    if (this.isModified('category')) {
+        this.isPremium = this.category === 'premium';
+    } else if (this.isModified('isPremium')) {
+        this.category = this.isPremium ? 'premium' : 'standard';
+    }
+    next();
+});
+
+// Index for getting active layouts by section type
+sectionLayoutSchema.index({ sectionType: 1, isActive: 1 });
+sectionLayoutSchema.index({ sectionType: 1, category: 1, isActive: 1 });
 
 module.exports = mongoose.model('SectionLayout', sectionLayoutSchema);

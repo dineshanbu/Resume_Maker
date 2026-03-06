@@ -1245,6 +1245,407 @@ const getPublicResume = asyncHandler(async (req, res) => {
   return successResponse(res, { resume }, 'Public resume retrieved successfully');
 });
 
+// ─── Editor-specific endpoints ───────────────────────────────────
+
+/**
+ * @desc    Save ONLY editorConfig (lightweight auto-save)
+ * @route   PUT /api/resume/:id/editor
+ * @access  Private
+ */
+const saveEditorConfig = asyncHandler(async (req, res) => {
+  const resume = await Resume.findById(req.params.id);
+
+  if (!resume) {
+    return notFoundResponse(res, 'Resume not found');
+  }
+
+  if (resume.userId.toString() !== req.user._id.toString()) {
+    return forbiddenResponse(res, 'You do not have permission to update this resume');
+  }
+
+  const { editorConfig } = req.body;
+
+  if (!editorConfig) {
+    return badRequestResponse(res, 'editorConfig is required');
+  }
+
+  resume.editorConfig = editorConfig;
+  resume.lastEditedAt = new Date();
+  await resume.save();
+
+  return successResponse(res, {
+    success: true,
+    lastEditedAt: resume.lastEditedAt
+  }, 'Editor config saved successfully');
+});
+
+/**
+ * Build full HTML string for PDF from resume + editorConfig
+ */
+function buildResumeHTML(resume) {
+  const config = resume.editorConfig || {};
+  const globalSettings = config.globalSettings || {};
+  const sections = (config.sections || [])
+    .filter(s => s.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  const fontFamily = globalSettings.fontFamily || 'Inter';
+  const primaryColor = globalSettings.primaryColor || '#1a1a1a';
+  const secondaryColor = globalSettings.secondaryColor || '#4F46E5';
+  const pageMargin = globalSettings.pageMargin || 32;
+  const sectionSpacing = globalSettings.sectionSpacing || 16;
+  const lineHeight = globalSettings.lineHeight || 1.5;
+  const letterSpacing = globalSettings.letterSpacing || 0;
+
+  // Get resume data from resumeData or top-level fields
+  const data = resume.resumeData || {};
+  const personalInfo = data.personalInfo || resume.personalInfo || {};
+  const summary = data.summary || resume.summary || '';
+  const experience = data.experience || resume.experience || [];
+  const education = data.education || resume.education || [];
+  const skills = data.skills || resume.skills || {};
+  const languages = (skills && skills.languages) || data.languages || [];
+  const certifications = data.certifications || resume.certifications || [];
+  const projects = data.projects || resume.projects || [];
+  const awards = data.awards || resume.achievements || [];
+
+  // Extract skill arrays
+  const skillList = [];
+  if (Array.isArray(skills)) {
+    skills.forEach(s => skillList.push({ name: s.name || s, level: s.level || 50 }));
+  } else {
+    if (skills.technical) skills.technical.forEach(s => skillList.push({ name: s, level: 80 }));
+    if (skills.soft) skills.soft.forEach(s => skillList.push({ name: s, level: 70 }));
+  }
+
+  function buildSectionHTML(section) {
+    const d = section.design || {};
+    const ff = d.fontFamily || fontFamily;
+    const fs = d.fontSize || 14;
+    const tc = d.textColor || primaryColor;
+    const bg = d.backgroundColor || '#ffffff';
+    const ac = d.accentColor || secondaryColor;
+    const pad = d.padding || { top: 12, bottom: 12, left: 16, right: 16 };
+    const showDivider = d.showDivider !== false;
+    const dividerStyle = d.dividerStyle || 'solid';
+    const dividerColor = d.dividerColor || '#e5e7eb';
+    const variant = section.layoutVariant || 1;
+
+    const wrapperStyle = `font-family: '${ff}', sans-serif; font-size: ${fs}px; color: ${tc}; background: ${bg}; padding: ${pad.top}px ${pad.right}px ${pad.bottom}px ${pad.left}px; margin-bottom: ${sectionSpacing}px;`;
+    const headingStyle = `text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: 11px; color: ${ac}; margin-bottom: 6px;`;
+    const dividerHTML = showDivider ? `<div style="border-bottom: 1px ${dividerStyle} ${dividerColor}; margin-bottom: 8px;"></div>` : '';
+
+    switch (section.type) {
+      case 'header': {
+        const name = personalInfo.fullName || personalInfo.name || '';
+        const job = personalInfo.jobTitle || data.jobTitle || '';
+        const email = personalInfo.email || '';
+        const phone = personalInfo.phone || '';
+        const city = personalInfo.city || personalInfo.address || personalInfo.location || '';
+        const linkedin = personalInfo.linkedin || '';
+
+        if (variant === 2) {
+          return `<div style="${wrapperStyle} display: flex; justify-content: space-between;">
+            <div><div style="font-size: 24px; font-weight: 700; color: ${ac}; text-transform: uppercase;">${name}</div><div style="font-size: 14px; color: #6b7280;">${job}</div></div>
+            <div style="text-align: right; font-size: 12px; color: #6b7280;">${email ? '✉ ' + email + '<br>' : ''}${phone ? '📞 ' + phone + '<br>' : ''}${city ? '📍 ' + city + '<br>' : ''}${linkedin ? '🔗 ' + linkedin : ''}</div>
+          </div>`;
+        } else if (variant === 3) {
+          return `<div style="${wrapperStyle} text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: ${ac}; text-transform: uppercase;">${name}</div>
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">${job}</div>
+            <div style="border-top: 2px solid ${ac}; margin: 8px auto; width: 60%;"></div>
+            <div style="font-size: 11px; color: #6b7280;">${[email && '✉ ' + email, phone && '📞 ' + phone, city && '📍 ' + city].filter(Boolean).join(' | ')}</div>
+          </div>`;
+        } else if (variant === 4) {
+          const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+          return `<div style="${wrapperStyle} background: ${primaryColor}; color: #fff; display: flex; align-items: center; gap: 16px; padding: 20px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: ${ac}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px;">${initials}</div>
+            <div>
+              <div style="font-size: 22px; font-weight: 700;">${name}</div>
+              <div style="font-size: 13px; opacity: 0.8;">${job}</div>
+              <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">${[email && '✉ ' + email, phone && '📞 ' + phone, city && '📍 ' + city].filter(Boolean).join('  ')}</div>
+            </div>
+          </div>`;
+        }
+        // variant 1
+        return `<div style="${wrapperStyle}">
+          <div style="font-size: 24px; font-weight: 700; color: ${ac}; text-transform: uppercase;">${name}</div>
+          <div style="font-size: 14px; color: #6b7280; margin-bottom: 6px;">${job}</div>
+          <div style="font-size: 11px; color: #6b7280;">${[email && '✉ ' + email, phone && '📞 ' + phone, city && '📍 ' + city, linkedin && '🔗 ' + linkedin].filter(Boolean).join(' | ')}</div>
+        </div>`;
+      }
+
+      case 'summary': {
+        if (variant === 2) {
+          return `<div style="${wrapperStyle} border-left: 3px solid ${ac}; padding-left: 16px;">
+            <div style="${headingStyle}">Profile</div><p style="line-height: ${lineHeight};">${summary}</p>
+          </div>`;
+        } else if (variant === 3) {
+          return `<div style="${wrapperStyle}">
+            <div style="${headingStyle}">📝 Professional Summary</div>${dividerHTML}<p style="line-height: ${lineHeight};">${summary}</p>
+          </div>`;
+        } else if (variant === 4) {
+          return `<div style="${wrapperStyle} background: #f9fafb; border-radius: 6px; font-style: italic;">
+            <span style="font-size: 28px; color: ${ac}; line-height: 1;">"</span>
+            <p style="line-height: ${lineHeight}; margin: 4px 0;">${summary}</p>
+            <span style="font-size: 28px; color: ${ac}; line-height: 1; float: right;">"</span>
+          </div>`;
+        }
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Profile</div>${dividerHTML}<p style="line-height: ${lineHeight};">${summary}</p></div>`;
+      }
+
+      case 'experience': {
+        const items = experience.map(exp => {
+          const company = exp.company || '';
+          const role = exp.role || exp.jobTitle || '';
+          const startDate = exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+          const endDate = exp.isCurrentJob ? 'Present' : (exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '');
+          const location = exp.location || '';
+          const bullets = exp.bullets || exp.achievements || [];
+          const desc = exp.description || '';
+
+          if (variant === 2) {
+            return `<div style="display: flex; margin-bottom: 12px;">
+              <div style="width: 2px; background: ${ac}; margin-right: 12px; position: relative;"><div style="width: 8px; height: 8px; border-radius: 50%; background: ${ac}; position: absolute; top: 4px; left: -3px;"></div></div>
+              <div><div style="font-weight: 600;">${company}</div><div style="font-size: 12px; color: #6b7280;">${role} | ${startDate} – ${endDate}</div>
+              ${bullets.length ? '<ul style="margin: 4px 0; padding-left: 16px;">' + bullets.map(b => `<li style="font-size: 12px; margin-bottom: 2px;">${b}</li>`).join('') + '</ul>' : (desc ? `<p style="font-size: 12px; margin: 4px 0;">${desc}</p>` : '')}
+              </div></div>`;
+          } else if (variant === 3) {
+            return `<div style="background: #f9fafb; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+              <div style="font-weight: 600;">${company}</div><div style="font-size: 12px; color: #6b7280;">${role} | ${startDate} – ${endDate}${location ? ' | ' + location : ''}</div>
+              ${bullets.length ? '<ul style="margin: 4px 0; padding-left: 16px;">' + bullets.map(b => `<li style="font-size: 12px;">${b}</li>`).join('') + '</ul>' : (desc ? `<p style="font-size: 12px;">${desc}</p>` : '')}
+            </div>`;
+          } else if (variant === 4) {
+            return `<div style="display: flex; margin-bottom: 10px;">
+              <div style="width: 35%; font-size: 12px;"><div style="font-weight: 600;">${company}</div><div style="color: #6b7280;">${startDate} – ${endDate}</div><div style="color: #6b7280;">${location}</div></div>
+              <div style="width: 1px; background: #e5e7eb; margin: 0 12px;"></div>
+              <div style="flex: 1;"><div style="font-weight: 600;">${role}</div>
+              ${bullets.length ? '<ul style="margin: 4px 0; padding-left: 16px;">' + bullets.map(b => `<li style="font-size: 12px;">${b}</li>`).join('') + '</ul>' : (desc ? `<p style="font-size: 12px;">${desc}</p>` : '')}
+              </div></div>`;
+          }
+          return `<div style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">${company}</span><span style="font-size: 12px; color: #6b7280;">${role}</span></div>
+            <div style="font-size: 11px; color: #6b7280;">${startDate} – ${endDate}${location ? ' | ' + location : ''}</div>
+            ${bullets.length ? '<ul style="margin: 4px 0; padding-left: 16px;">' + bullets.map(b => `<li style="font-size: 12px;">${b}</li>`).join('') + '</ul>' : (desc ? `<p style="font-size: 12px;">${desc}</p>` : '')}
+          </div>`;
+        }).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Experience</div>${dividerHTML}${items}</div>`;
+      }
+
+      case 'education': {
+        const items = education.map(edu => {
+          const inst = edu.institution || '';
+          const degree = edu.degree || '';
+          const year = edu.year || (edu.startDate ? new Date(edu.startDate).getFullYear() : '') + (edu.endDate ? ' – ' + new Date(edu.endDate).getFullYear() : '');
+          const grade = edu.grade || edu.percentage || edu.cgpa || '';
+
+          if (variant === 3) {
+            return `<div style="display: flex; margin-bottom: 10px;">
+              <div style="width: 2px; background: ${ac}; margin-right: 12px; position: relative;"><div style="width: 8px; height: 8px; border-radius: 50%; background: ${ac}; position: absolute; top: 4px; left: -3px;"></div></div>
+              <div><div style="font-weight: 600;">${inst}</div><div style="font-size: 12px; color: #6b7280;">${degree} | ${year}${grade ? ' | Grade: ' + grade : ''}</div></div></div>`;
+          } else if (variant === 4) {
+            return `<div style="background: #f9fafb; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+              <div style="font-weight: 600;">🎓 ${inst}</div><div style="font-size: 12px; color: #6b7280;">${degree}</div><div style="font-size: 11px; color: #9ca3af;">${year}${grade ? '  |  Grade: ' + grade : ''}</div>
+            </div>`;
+          }
+          return `<div style="margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">${inst}</span><span style="font-size: 12px;">${degree}</span></div>
+            <div style="font-size: 11px; color: #6b7280;">${year}${grade ? ' | Grade: ' + grade : ''}</div>
+          </div>`;
+        }).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Education</div>${dividerHTML}${items}</div>`;
+      }
+
+      case 'skills': {
+        if (variant === 2) {
+          const items = skillList.map(s => `<div style="margin-bottom: 6px;"><div style="display: flex; justify-content: space-between; font-size: 12px;"><span>${s.name}</span><span>${s.level}%</span></div><div style="height: 4px; background: #e5e7eb; border-radius: 2px;"><div style="height: 100%; width: ${s.level}%; background: ${ac}; border-radius: 2px;"></div></div></div>`).join('');
+          return `<div style="${wrapperStyle}"><div style="${headingStyle}">Skills</div>${dividerHTML}${items}</div>`;
+        } else if (variant === 3) {
+          const items = skillList.map(s => {
+            const dots = Math.round(s.level / 20);
+            return `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px;"><span style="min-width: 100px;">${s.name}</span><span>${'●'.repeat(dots)}${'○'.repeat(5 - dots)}</span></div>`;
+          }).join('');
+          return `<div style="${wrapperStyle}"><div style="${headingStyle}">Skills</div>${dividerHTML}${items}</div>`;
+        } else if (variant === 4) {
+          const half = Math.ceil(skillList.length / 2);
+          const col1 = skillList.slice(0, half).map(s => `<div style="font-size: 12px; margin-bottom: 3px;">• ${s.name}</div>`).join('');
+          const col2 = skillList.slice(half).map(s => `<div style="font-size: 12px; margin-bottom: 3px;">• ${s.name}</div>`).join('');
+          return `<div style="${wrapperStyle}"><div style="${headingStyle}">Skills</div>${dividerHTML}<div style="display: flex; gap: 24px;"><div style="flex: 1;">${col1}</div><div style="flex: 1;">${col2}</div></div></div>`;
+        }
+        // variant 1 - chips
+        const chips = skillList.map(s => `<span style="display: inline-block; background: ${ac}; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 11px; margin: 2px 4px 2px 0;">${s.name}</span>`).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Skills</div>${dividerHTML}${chips}</div>`;
+      }
+
+      case 'languages': {
+        const langList = Array.isArray(languages) ? languages : [];
+        const items = langList.map(l => {
+          const name = l.name || l.language || '';
+          const prof = l.proficiency || '';
+          if (variant === 3) {
+            const lvl = prof === 'Native' ? 100 : prof === 'Advanced' ? 80 : prof === 'Intermediate' ? 60 : 30;
+            return `<div style="margin-bottom: 6px;"><div style="display: flex; justify-content: space-between; font-size: 12px;"><span>${name}</span><span>${lvl}%</span></div><div style="height: 4px; background: #e5e7eb; border-radius: 2px;"><div style="height: 100%; width: ${lvl}%; background: ${ac}; border-radius: 2px;"></div></div></div>`;
+          } else if (variant === 4) {
+            const dots = prof === 'Native' ? 5 : prof === 'Advanced' ? 4 : prof === 'Intermediate' ? 3 : 2;
+            return `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px;"><span style="min-width: 80px;">${name}</span><span>${'●'.repeat(dots)}${'○'.repeat(5 - dots)}</span></div>`;
+          }
+          return `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;"><span>${name}</span><span style="text-transform: uppercase; font-size: 10px; color: #6b7280;">${prof}</span></div>`;
+        }).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Languages</div>${dividerHTML}${items}</div>`;
+      }
+
+      case 'certifications': {
+        const items = certifications.map(c => {
+          const name = c.name || '';
+          const issuer = c.issuer || '';
+          const year = c.year || (c.issueDate ? new Date(c.issueDate).getFullYear() : '');
+          if (variant === 3) {
+            return `<div style="border-left: 3px solid ${ac}; padding-left: 10px; margin-bottom: 8px;"><div style="font-weight: 600; font-size: 13px;">${name}</div><div style="font-size: 11px; color: #6b7280;">${issuer}${year ? ' | ' + year : ''}</div></div>`;
+          } else if (variant === 4) {
+            return `<span style="display: inline-block; background: #f3f4f6; border-radius: 6px; padding: 6px 12px; margin: 2px 4px 2px 0; font-size: 11px;">🏅 ${name} ${year}</span>`;
+          }
+          return `<div style="margin-bottom: 6px;"><div style="font-weight: 600; font-size: 13px;">${variant === 2 ? '🏅 ' : ''}${name}</div><div style="font-size: 11px; color: #6b7280;">${issuer}${year ? ' | ' + year : ''}</div></div>`;
+        }).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Certifications</div>${dividerHTML}${items}</div>`;
+      }
+
+      case 'projects': {
+        const items = projects.map(p => {
+          const title = p.name || p.title || '';
+          const role = p.role || '';
+          const desc = p.description || '';
+          const tech = p.techStack || p.technologies || [];
+          const startDate = p.startDate ? new Date(p.startDate).getFullYear() : '';
+          const endDate = p.endDate ? new Date(p.endDate).getFullYear() : '';
+          const dateStr = startDate ? (endDate ? `${startDate} – ${endDate}` : startDate) : '';
+          const liveUrl = p.liveUrl || p.link || '';
+          const githubUrl = p.githubUrl || '';
+
+          if (variant === 2) {
+            return `<div style="background: #f9fafb; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">${title}</span><span style="font-size: 11px; color: #9ca3af;">${dateStr}</span></div>
+              ${role ? `<div style="font-size: 12px; color: #6b7280;">${role}</div>` : ''}
+              ${desc ? `<p style="font-size: 12px; margin: 4px 0;">${desc}</p>` : ''}
+              ${tech.length ? '<div>' + tech.map(t => `<span style="display: inline-block; background: #e5e7eb; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 4px;">${t}</span>`).join('') + '</div>' : ''}
+              ${liveUrl || githubUrl ? `<div style="font-size: 11px; margin-top: 4px;">${liveUrl ? '🔗 Live Demo' : ''}${liveUrl && githubUrl ? '  |  ' : ''}${githubUrl ? '💻 GitHub' : ''}</div>` : ''}
+            </div>`;
+          } else if (variant === 4) {
+            return `<div style="font-size: 12px; margin-bottom: 4px;">• ${title}${dateStr ? ' (' + dateStr + ')' : ''} — ${tech.join(', ')}</div>`;
+          }
+          return `<div style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">${title}</span><span style="font-size: 11px; color: #9ca3af;">${dateStr}</span></div>
+            ${role ? `<div style="font-size: 12px; color: #6b7280;">${role}</div>` : ''}
+            ${desc ? `<p style="font-size: 12px; margin: 4px 0;">${desc}</p>` : ''}
+            ${tech.length ? '<div>' + tech.map(t => `<span style="display: inline-block; background: ${ac}; color: #fff; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 4px;">${t}</span>`).join('') + '</div>' : ''}
+          </div>`;
+        }).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Projects</div>${dividerHTML}${items}</div>`;
+      }
+
+      case 'awards': {
+        const awardList = Array.isArray(awards) ? awards : [];
+        const items = awardList.map(a => {
+          const title = a.title || a;
+          const org = a.organization || '';
+          const year = a.year || '';
+          const desc = a.description || '';
+          if (variant === 2) {
+            return `<div style="background: #f9fafb; border-radius: 6px; padding: 10px; margin-bottom: 6px;"><div style="font-weight: 600;">🥇 ${title} <span style="font-size: 11px; color: #9ca3af;">${year}</span></div>${org ? `<div style="font-size: 12px; color: #6b7280;">${org}</div>` : ''}${desc ? `<p style="font-size: 12px;">${desc}</p>` : ''}</div>`;
+          }
+          return `<div style="margin-bottom: 6px;"><div style="font-weight: 600;">${variant === 1 ? '🥇 ' : ''}${title}</div><div style="font-size: 11px; color: #6b7280;">${org}${year ? ' | ' + year : ''}</div>${desc ? `<p style="font-size: 12px;">${desc}</p>` : ''}</div>`;
+        }).join('');
+        return `<div style="${wrapperStyle}"><div style="${headingStyle}">Awards</div>${dividerHTML}${items}</div>`;
+      }
+
+      default:
+        return '';
+    }
+  }
+
+  const sectionsHTML = sections.map(s => buildSectionHTML(s)).join('');
+
+  // Check if plan is free → add watermark
+  const userPlan = resume.planType || 'Free';
+  const isFreePlan = userPlan === 'Free' || userPlan === 'FREE';
+  const watermarkHTML = isFreePlan
+    ? `<div style="text-align: center; font-size: 9px; color: #9ca3af; padding: 12px 0; border-top: 1px solid #e5e7eb; margin-top: 20px;">Created with Resume Maker — Upgrade to Premium to remove this watermark</div>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: '${fontFamily}', sans-serif; color: ${primaryColor}; line-height: ${lineHeight}; letter-spacing: ${letterSpacing}px; width: 595px; }
+    p { margin: 0; }
+    ul { margin: 0; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    .page-content { padding: ${pageMargin}px; }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+    ${sectionsHTML}
+    ${watermarkHTML}
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * @desc    Generate PDF using Puppeteer with editorConfig layout
+ * @route   POST /api/resume/:id/pdf
+ * @access  Private
+ */
+const generateEditorPdf = asyncHandler(async (req, res) => {
+  const puppeteer = require('puppeteer');
+
+  const resume = await Resume.findById(req.params.id);
+
+  if (!resume) {
+    return notFoundResponse(res, 'Resume not found');
+  }
+
+  if (resume.userId.toString() !== req.user._id.toString()) {
+    return forbiddenResponse(res, 'You do not have permission to generate this PDF');
+  }
+
+  const htmlString = buildResumeHTML(resume);
+
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setContent(htmlString, { waitUntil: 'networkidle0' });
+
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '0', right: '0', bottom: '0', left: '0' }
+    });
+
+    await browser.close();
+    browser = null;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${(resume.title || 'resume').replace(/[^a-zA-Z0-9 ]/g, '')}.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    if (browser) await browser.close();
+    console.error('PDF generation error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate PDF. Please try again.',
+      errors: [err.message]
+    });
+  }
+});
+
 module.exports = {
   createResume,
   getMyResumes,
@@ -1259,5 +1660,7 @@ module.exports = {
   exportResumeUrl,
   getPublicResume,
   scanResumeATS,
-  improveResumeATS
+  improveResumeATS,
+  saveEditorConfig,
+  generateEditorPdf
 };

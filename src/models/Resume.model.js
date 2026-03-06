@@ -196,6 +196,47 @@ const resumeSchema = new mongoose.Schema({
     type: Date,
     default: null,
     index: true
+  },
+
+  // ─── Editor Configuration (Figma-like editor state) ───
+  editorConfig: {
+    sections: [{
+      id: { type: String },
+      type: { type: String },
+      order: { type: Number },
+      visible: { type: Boolean, default: true },
+      layoutVariant: { type: Number, default: 1 },
+      design: {
+        fontFamily: { type: String, default: 'Inter' },
+        fontSize: { type: Number, default: 14 },
+        textColor: { type: String, default: '#1a1a1a' },
+        backgroundColor: { type: String, default: '#ffffff' },
+        accentColor: { type: String, default: '#4F46E5' },
+        padding: {
+          top: { type: Number, default: 12 },
+          bottom: { type: Number, default: 12 },
+          left: { type: Number, default: 16 },
+          right: { type: Number, default: 16 }
+        },
+        showDivider: { type: Boolean, default: true },
+        dividerStyle: { type: String, default: 'solid' },
+        dividerColor: { type: String, default: '#e5e7eb' }
+      }
+    }],
+    globalSettings: {
+      fontFamily: { type: String, default: 'Inter' },
+      primaryColor: { type: String, default: '#1a1a1a' },
+      secondaryColor: { type: String, default: '#4F46E5' },
+      pageMargin: { type: Number, default: 32 },
+      sectionSpacing: { type: Number, default: 16 },
+      lineHeight: { type: Number, default: 1.5 },
+      letterSpacing: { type: Number, default: 0 }
+    }
+  },
+
+  lastEditedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true

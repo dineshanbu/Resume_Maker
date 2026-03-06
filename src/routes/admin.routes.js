@@ -18,6 +18,16 @@ const {
   uploadTemplateImage
 } = require('../controllers/admin/adminTemplate.controller');
 
+const {
+  createSectionLayout,
+  getAllSectionLayouts,
+  getSectionLayoutById,
+  updateSectionLayout,
+  deleteSectionLayout,
+  toggleActiveStatus,
+  togglePremiumStatus
+} = require('../controllers/admin/sectionLayout.controller');
+
 // Import master routes
 const masterRoutes = require('./master.routes');
 
@@ -59,6 +69,40 @@ router.patch('/templates/bulk-update', bulkUpdateTemplates);
 
 // Delete template
 router.delete('/templates/:id', deleteTemplate);
+
+// ============================================
+// SECTION LAYOUT MANAGEMENT ROUTES
+// ============================================
+
+// Get all section layouts
+router.get('/section-layouts', getAllSectionLayouts);
+
+// Get single section layout by ID
+router.get('/section-layouts/:id', getSectionLayoutById);
+
+// Create new section layout
+router.post('/section-layouts', createSectionLayout);
+
+// Update section layout
+router.put('/section-layouts/:id', updateSectionLayout);
+
+// Delete section layout
+router.delete('/section-layouts/:id', deleteSectionLayout);
+
+// Toggle active status
+router.patch('/section-layouts/:id/toggle-active', toggleActiveStatus);
+
+// Toggle premium status
+router.patch('/section-layouts/:id/toggle-premium', togglePremiumStatus);
+
+// ============================================
+// AI LAYOUT GENERATION ROUTES
+// ============================================
+
+const { generateLayout } = require('../controllers/admin/ai.controller');
+
+// Generate layout using Gemini AI
+router.post('/ai/generate-layout', generateLayout);
 
 // ============================================
 // TEMPLATE RATING MANAGEMENT ROUTES

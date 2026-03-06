@@ -15,7 +15,9 @@ const {
   exportResumeUrl,
   getPublicResume,
   scanResumeATS,
-  improveResumeATS
+  improveResumeATS,
+  saveEditorConfig,
+  generateEditorPdf
 } = require('../controllers/resume.controller');
 const { authenticate, optionalAuth } = require('../middlewares/auth.middleware');
 const {
@@ -44,6 +46,10 @@ router.post('/:id/export-url', idParamValidation, exportResumeUrl);
 router.get('/:id/download-pdf', idParamValidation, downloadResumePDF);
 router.get('/:id/stats', idParamValidation, getResumeStats);
 router.patch('/:id/section/:section', updateResumeSection);
+
+// Editor-specific routes
+router.put('/:id/editor', saveEditorConfig);
+router.post('/:id/pdf', generateEditorPdf);
 
 // ATS analysis
 router.get('/:id/ats-scan', idParamValidation, scanResumeATS);
